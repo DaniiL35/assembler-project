@@ -4,6 +4,7 @@
 
 /* Constants */
 #define MAX_LABEL_LENGTH 31
+#define INSTRUCTION_TABLE_SIZE 16
 
 /* Structure declarations */
 typedef enum{
@@ -13,6 +14,7 @@ typedef enum{
 
 
 /* Function declarations */
+int valid_register(char *str);
 
 
 #endif
