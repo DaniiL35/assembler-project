@@ -33,30 +33,41 @@ struct instruction instruction_Table[INSTRUCTION_TABLE_SIZE] = {
     {"stop", 15, "", "", 0}
 };
 
-char * addressing_method(char *str) {
+/* find in the instruction table */
+int find_in_table(char *word) {
+    int i;
+    for (i = 0; i < INSTRUCTION_TABLE_SIZE; i++) {
+        if (strcmp(word, instruction_Table[i].name) == 0) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+char *addressing_method(char *str) {
     if (str[0] == '#') {
         return "0";
     }
     /* if (Direct address )
         return 1; */
     if (str[0] == '*') {
-        if (valid_register(str)) 
+        if (valid_register(str)) {
             return "2";
-            }
+        }
+    }
     if (valid_register(str)) {
-    return "3";
+        return "3";
     }
     printf("Error: invalid addressing method\n");
     return NULL;
 }
 
 int valid_register(char *str) {
-    if (str[0] == 'r' && str[1] >= '0' && str[1] <= '7') {
+    if (str[0] == 'r' && str[1] >= '0' && str[1] <= '7' && (str[3] == ' ' || str[3] == ',')) {
         return true;
     }
     return false;
 }
-
 
 /* Checks if the word is a directive.
    Returns 1 if it is a directive, 0 otherwise. */
@@ -69,15 +80,14 @@ int is_directive(char *word) {
 
 /* Checks if the line is empty (only whitespace).
    Returns 1 if the line is empty, 0 otherwise. */
-int is_empty(char *line) {
-    char *ptr = line;
-    while (*ptr) {
-        if (!isspace((unsigned char)*ptr)) {
-            return 0;
+int is_empty(const char *line) {
+    while (*line != '\0') {
+        if (!isspace(*line)) {
+            return 0; 
         }
-        ptr++;
+        line++;
     }
-    return 1;
+    return 1; 
 }
 
 /* Checks if the word is an instruction.
@@ -119,8 +129,6 @@ static int is_number(char *str, int max, int min, int *result) {
     return 0; /* need to implement */
 }
 
-
-
 /* remove char from a word (f for first, l for last )*/
 void remove_by_place(char *str, char place) {
     size_t len = strlen(str);
@@ -134,51 +142,107 @@ void remove_by_place(char *str, char place) {
     }
 }
 
+/* skipping functions */
+void skip_to_next_word(char **str) {
+    char *next_space = strpbrk(*str, " ");
+    if (next_space != NULL) {
+        *str = next_space + 1;
+    }
+}
+
+void skip_to_the_next_operand(char **str) {
+    char *next_comma = strpbrk(*str, ",");
+    if (next_comma != NULL) {
+        next_comma++;
+        while (*next_comma == ' ') {
+            next_comma++;
+        }
+        *str = next_comma;
+    }
+}
+
 char *validation(char *fName) {
     char Current_Line[Max_LINE_LEN];
-    char first_word[Max_LINE_LEN], second_word[Max_LINE_LEN];
-    char *method; 
-    char *w2; 
+    char *addres_mode;
+    char *current_word;
     char *am_file_name;
     int line_counter = 0;
     FILE *am_file;
     am_file_name = strcatWithMalloc(fName, am_file_ext);
-    am_file = openFileAndCheck(am_file_name, "w+");
+    am_file = openFileAndCheck(am_file_name, "r");
+    current_word = (char *)malloc(Max_LINE_LEN * sizeof(char));
 
-    /* reading line by line from the as file */
     while (fgets(Current_Line, Max_LINE_LEN, am_file) != 0) {
+        printf(" reading started \n"); /* testing only */
+        printf("Current line: %s\n", Current_Line); /* testing only */
         line_counter++;
-        /* Check if the line is empty (only whitespace) */
-        if (is_empty(Current_Line))
+        /* skip empty lines */
+        if (is_empty(Current_Line)){
+            printf("Empty line found\n"); /* testing only */
+            continue;}
+        /* skip comments */
+        if (Current_Line[0] == ';') {
+            printf("Comment found %s\n", Current_Line); /* testing only */
             continue;
-
-        /* checks for command line */
-        if (Current_Line[0] == ';')
-            fputs(Current_Line, am_file);
-            continue;
-
-        /* checks if the first word is label */
-        sscanf(Current_Line, " %s %s ", first_word, second_word);
-        if (isLabel(first_word)) {
-            /* next word must be instruction */
-            w2 = strpbrk(Current_Line, " ");
-            w2++;
-            if (is_instruction(w2)) {
-                w2 = strpbrk(w2, " ");
-                w2++;
-                method = addressing_method(w2);
-                printf("method: %s\n", method);
-
-
-
+        }
+        /* for rows with label */
+        sscanf(Current_Line, " %s", current_word);
+        if (isLabel(current_word)) {
+            skip_to_next_word(&current_word);
+            if (is_instruction(current_word)) {
+                skip_to_next_word(&current_word);
+                addres_mode = addressing_method(current_word);
+                if (addres_mode == NULL) {
+                    printf("Error: invalid addressing method\n");
+                    free(current_word);
+                    return NULL;
+                }
+                if (strstr(addres_mode, instruction_Table[find_in_table(current_word)].source) == NULL) {
+                    printf("Error: invalid source operand\n");
+                    free(current_word);
+                    return NULL;
+                }
+                skip_to_the_next_operand(&current_word);
+                addres_mode = addressing_method(current_word);
+                if (strstr(addres_mode, instruction_Table[find_in_table(current_word)].dest) == NULL) {
+                    printf("Error: invalid destination operand\n");
+                    free(current_word);
+                    return NULL;
+                }
+            }
+        }
+        /* for rows without label*/
+        else {
+            if (is_instruction(current_word)) {
+                skip_to_next_word(&current_word);
+                addres_mode = addressing_method(current_word);
+                if (addres_mode == NULL) {
+                    printf("Error: invalid addressing method\n");
+                    free(current_word);
+                    return NULL;
+                }
+                if (strstr(addres_mode, instruction_Table[find_in_table(current_word)].source) == NULL) {
+                    printf("Error: invalid source operand\n");
+                    free(current_word);
+                    return NULL;
+                }
+                skip_to_the_next_operand(&current_word);
+                addres_mode = addressing_method(current_word);
+                if (strstr(addres_mode, instruction_Table[find_in_table(current_word)].dest) == NULL) {
+                    printf("Error: invalid destination operand\n");
+                    free(current_word);
+                    return NULL;
+                }
             }
         }
     }
-    return NULL; 
+    fclose(am_file);
+    free(current_word);
+    return NULL;
 }
 
 int main() {
     char *fName = "test";
-    validation(fName);
+    (validation(fName));
     return 0;
 }
