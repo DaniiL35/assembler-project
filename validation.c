@@ -102,24 +102,32 @@ int is_instruction(char *word) {
     return 0;
 }
 
-int is_alphanumeric_string(const char *str) {
-    while (*str) {
-        if (!isalnum(*str)) {
+/* Checks if the string is alphanumeric */
+static int is_alphanumeric_string(const char *str, int length) {
+    int i;
+    for ( i = 0; i < length; i++) {
+        if (!isalnum(str[i])) {
             return false;
         }
-        str++;
     }
     return true;
 }
 
-/* Checks if the first word of the line is a label.
-   Returns 1 if it is a label, 0 otherwise. */
+/* check if a word is a label */
 static int isLabel(char *word) {
+    int len;
     char label[MAX_LABEL_LENGTH];
     sscanf(word, "%s", label);
+    len = strlen(label);
 
-    if (label[strlen(label) - 1] == ':') {
-        return true;
+    if (label[len - 1] == ':') {
+        if (is_alphanumeric_string(label, len - 1)) {
+            return true;
+        }
+        else {
+            printf("Error: invalid label format\n");
+            return -1;
+        }
     }
     return false;
 }
@@ -162,14 +170,17 @@ void skip_to_the_next_operand(char **str) {
 }
 
 char *validation(char *fName) {
+    int line_counter = 0;
     char Current_Line[Max_LINE_LEN];
     char *addres_mode;
     char *current_word;
     char *am_file_name;
-    int line_counter = 0;
+    char *temp_file_name = "temp.am";
+    FILE *temp_file;
     FILE *am_file;
     am_file_name = strcatWithMalloc(fName, am_file_ext);
     am_file = openFileAndCheck(am_file_name, "r");
+    temp_file = openFileAndCheck(temp_file_name, "w");
     current_word = (char *)malloc(Max_LINE_LEN * sizeof(char));
 
     while (fgets(Current_Line, Max_LINE_LEN, am_file) != 0) {
@@ -178,65 +189,51 @@ char *validation(char *fName) {
         line_counter++;
         /* skip empty lines */
         if (is_empty(Current_Line)){
-            printf("Empty line found\n"); /* testing only */
             continue;}
         /* skip comments */
         if (Current_Line[0] == ';') {
-            printf("Comment found %s\n", Current_Line); /* testing only */
             continue;
         }
+        
         /* for rows with label */
         sscanf(Current_Line, " %s", current_word);
         if (isLabel(current_word)) {
             skip_to_next_word(&current_word);
-            if (is_instruction(current_word)) {
-                skip_to_next_word(&current_word);
-                addres_mode = addressing_method(current_word);
-                if (addres_mode == NULL) {
-                    printf("Error: invalid addressing method\n");
-                    free(current_word);
-                    return NULL;
-                }
-                if (strstr(addres_mode, instruction_Table[find_in_table(current_word)].source) == NULL) {
-                    printf("Error: invalid source operand\n");
-                    free(current_word);
-                    return NULL;
-                }
-                skip_to_the_next_operand(&current_word);
-                addres_mode = addressing_method(current_word);
-                if (strstr(addres_mode, instruction_Table[find_in_table(current_word)].dest) == NULL) {
-                    printf("Error: invalid destination operand\n");
-                    free(current_word);
-                    return NULL;
-                }
-            }
+        if(isLabel(current_word) == -1){
+            printf("Error: invalid label format\n");
+            free(current_word);
+            continue;
+        }
         }
         /* for rows without label*/
         else {
             if (is_instruction(current_word)) {
                 skip_to_next_word(&current_word);
                 addres_mode = addressing_method(current_word);
-                if (addres_mode == NULL) {
+                if (addres_mode == NULL) { /* check if the addressing method is valid */
                     printf("Error: invalid addressing method\n");
                     free(current_word);
                     return NULL;
                 }
-                if (strstr(addres_mode, instruction_Table[find_in_table(current_word)].source) == NULL) {
+                if (strstr(addres_mode, instruction_Table[find_in_table(current_word)].source) == NULL) { /* check if the source operand is valid */
                     printf("Error: invalid source operand\n");
                     free(current_word);
                     return NULL;
                 }
                 skip_to_the_next_operand(&current_word);
                 addres_mode = addressing_method(current_word);
-                if (strstr(addres_mode, instruction_Table[find_in_table(current_word)].dest) == NULL) {
+                if (strstr(addres_mode, instruction_Table[find_in_table(current_word)].dest) == NULL) { /* check if the destination operand is valid */
                     printf("Error: invalid destination operand\n");
                     free(current_word);
                     return NULL;
                 }
+                }
             }
         }
     }
+    fclose(temp_file);
     fclose(am_file);
+    free(am_file_name);
     free(current_word);
     return NULL;
 }
