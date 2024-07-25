@@ -5,6 +5,7 @@
 #include "preprocessor.h"
 #include "validation.h"
 
+/* Structure to represent an instruction */
 struct instruction {
     char *name;
     int opcode;
@@ -13,6 +14,7 @@ struct instruction {
     int num_of_operands;
 };
 
+/* Instruction table */
 struct instruction instruction_Table[INSTRUCTION_TABLE_SIZE] = {
     {"mov", 0, "0123", "0123", 2},
     {"cmp", 1, "0123", "0123", 2},
@@ -32,6 +34,7 @@ struct instruction instruction_Table[INSTRUCTION_TABLE_SIZE] = {
     {"stop", 15, "", "", 0}
 };
 
+/* Function to find an instruction in the instruction table */
 int find_in_table(char *word) {
     int i;
     for (i = 0; i < INSTRUCTION_TABLE_SIZE; i++) {
@@ -42,6 +45,7 @@ int find_in_table(char *word) {
     return -1;
 }
 
+/* Function to determine the addressing method of an operand */
 char *addressing_method(char *str) {
     if (str[0] == '#') {
         return "0";
@@ -58,14 +62,17 @@ char *addressing_method(char *str) {
     return NULL;
 }
 
+/* Function to check if a string is a valid register */
 int valid_register(char *str) {
     return (str[0] == 'r' && str[1] >= '0' && str[1] <= '7' && (str[2] == ' ' || str[2] == ',')) ? true : false;
 }
 
+/* Function to check if a word is a directive */
 int is_directive(char *word) {
     return (strcmp(word, ".data") == 0 || strcmp(word, ".string") == 0 || strcmp(word, ".entry") == 0 || strcmp(word, ".extern") == 0);
 }
 
+/* Function to check if a line is empty */
 int is_empty(const char *line) {
     while (*line != '\0') {
         if (!isspace(*line)) {
@@ -76,10 +83,12 @@ int is_empty(const char *line) {
     return 1; 
 }
 
+/* Function to check if a word is an instruction */
 int is_instruction(char *word) {
     return find_in_table(word) != -1;
 }
 
+/* Function to check if a string is alphanumeric */
 static int is_alphanumeric_string(const char *str, int length) {
     int i;
     for (i = 0; i < length; i++) {
@@ -90,6 +99,7 @@ static int is_alphanumeric_string(const char *str, int length) {
     return true;
 }
 
+/* Function to check if a word is a label */
 static int is_label(char *word) {
     char label[MAX_LABEL_LENGTH];
     int len;
@@ -102,7 +112,7 @@ static int is_label(char *word) {
     return false;
 }
 
-
+/* Function to remove a character from a string */
 void remove_by_place(char *str, char place) {
     size_t len = strlen(str);
     if (len > 0) {
@@ -114,6 +124,7 @@ void remove_by_place(char *str, char place) {
     }
 }
 
+/* Function to skip to the next word in a string */
 void skip_to_next_word(char **str) {
     char *next_space = strpbrk(*str, " ");
     if (next_space != NULL) {
@@ -121,6 +132,7 @@ void skip_to_next_word(char **str) {
     }
 }
 
+/* Function to skip to the next operand in a string */
 void skip_to_the_next_operand(char **str) {
     char *next_comma = strpbrk(*str, ",");
     if (next_comma != NULL) {
@@ -131,11 +143,15 @@ void skip_to_the_next_operand(char **str) {
         *str = next_comma;
     }
 }
+
+/* Function to skip the leading sign in a string */
 void skip_leading_sign(char **str) {
     if ((*str)[0] == '+' || (*str)[0] == '-') {
         (*str)++;
     }
 }
+
+/* Function to check if a string contains valid data */
 int is_valid_data(char **str) {
     while (**str != '\0') {
         if (!isdigit(**str)) {
@@ -143,22 +159,11 @@ int is_valid_data(char **str) {
         }
         strpbrk(*str, ",");
         skip_to_the_next_operand(str);
-        
-
-
-
-
-
-
-
-
-        
-
     }
     return true;
 }
 
-
+/* Function for validation */
 char *validation(char *fName) {
     int line_counter = 1;
     char Current_Line[Max_LINE_LEN];
@@ -203,27 +208,27 @@ char *validation(char *fName) {
             if (strcmp(current_word, ".data") == 0) {
                 skip_to_next_word(&current_word);
                 skip_leading_sign(&current_word);
-                } else {
-                    printf("Error at line %d: expected a number\n", line_counter);
-                    free(current_word);
-                    return NULL;
-                }
-            } else if (strcmp(current_word, ".string") == 0) {
-                skip_to_next_word(&current_word);
-                if (current_word[0] != '\"' || current_word[strlen(current_word) - 1] != '\"') {
-                    printf("Error at line %d: invalid string\n", line_counter);
-                    free(current_word);
-                    return NULL;
-                }
-            } else if (strcmp(current_word, ".entry") == 0 || strcmp(current_word, ".extern") == 0) {
-                continue;
+            } else {
+                printf("Error at line %d: expected a number\n", line_counter);
+                free(current_word);
+                return NULL;
             }
+        } else if (strcmp(current_word, ".string") == 0) {
+            skip_to_next_word(&current_word);
+            if (current_word[0] != '\"' || current_word[strlen(current_word) - 1] != '\"') {
+                printf("Error at line %d: invalid string\n", line_counter);
+                free(current_word);
+                return NULL;
+            }
+        } else if (strcmp(current_word, ".entry") == 0 || strcmp(current_word, ".extern") == 0) {
+            continue;
         } else {
             printf("Error at line %d: invalid instruction or directive\n", line_counter);
             free(current_word);
             return NULL;
         }
         fputs(Current_Line, temp_file);
+    }
     
     fclose(temp_file);
     fclose(am_file);
@@ -232,6 +237,7 @@ char *validation(char *fName) {
     return NULL;
 }
 
+/* Main function */
 int main() {
     char *fName = "test";
     validation(fName);
