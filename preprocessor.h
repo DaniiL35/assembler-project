@@ -11,6 +11,7 @@
 #define Macro_start         "macr"
 #define Macro_end           "endmacr"
 #define TABLE_SIZE          1000
+#define invalid_macro_table_size 30
 
 /* Structure declarations */
 struct Macro;

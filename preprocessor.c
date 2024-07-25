@@ -1,6 +1,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <ctype.h>
 #include "preprocessor.h"
 
 /* Macro structure */
@@ -9,6 +10,12 @@ struct Macro {
     char **lines;
     int lineC;
     struct Macro *next;
+};
+
+
+const char *invalid_macro_names[invalid_macro_table_size] = {
+    "mov", "cmp", "add", "sub", "lea", "clr", "not", "inc", "dec", "jmp", "bne", "red", "prn", "jsr", "rts", "stop"
+    "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7", "macro", "endmacr", "data", "string", "entry", "extern"
 };
 
 /* Hash table structure */
@@ -84,6 +91,20 @@ int macro_line(char *line_buffer, struct Macro **currentMacro, struct MacroTable
     
     /* macro def */
     if (strcmp(firstWord, Macro_start) == 0) {
+        
+         /* Check if the macro name starts with a digit */
+        if (isdigit(macro_name[0])) {
+            printf("Error: Macro name '%s' cannot start with a digit.\n", macro_name);
+            return -1;
+        }
+          /* Check if the macro name starts with an invalid name */
+        for (i = 0; i < invalid_macro_table_size; i++) {
+            if (strncmp(macro_name, invalid_macro_names[i], strlen(invalid_macro_names[i])) == 0) {
+                printf("Error: Macro name '%s' cannot start with '%s'.\n", macro_name, invalid_macro_names[i]);
+                return -1;
+            }
+        }
+        
         /* check if the macro already exists */
         if (search_macro(mTable, macro_name) != NULL) { 
             return -1;
