@@ -154,11 +154,15 @@ void skip_leading_sign(char **str) {
 /* Function to check if a string contains valid data */
 int is_valid_data(char **str) {
     while (**str != '\0') {
+        skip_leading_sign(str);
         if (!isdigit(**str)) {
             return false;
         }
         strpbrk(*str, ",");
-        skip_to_the_next_operand(str);
+        skip_to_next_word(str);
+        if (**str == ' ' || **str == '\t') {
+            (*str)++;
+        }
     }
     return true;
 }
