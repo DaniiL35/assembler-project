@@ -15,6 +15,8 @@ typedef enum{
 
 /* Function declarations */
 int valid_register(char *str);
+static int is_alphanumeric_and_upper_string(const char *str, int length) ;
+
 
 
 #endif
