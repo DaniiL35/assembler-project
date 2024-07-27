@@ -197,12 +197,11 @@ void skip_leading_sign(char **str) {
 
 /* Function to check if a string contains valid data */
 int is_valid_data(char **str) {
-    while (**str != ' ' && **str != ',') {
-        skip_leading_spaces(str);
-        skip_leading_sign(str);
-        if (!is_valid_integer(*str)) {
+    while (**str != '\0') {
+        if (!isdigit(**str)) {
             return false;
         }
+        strpbrk(*str, ",");
         skip_to_the_next_operand(str);
     }
 return true;
