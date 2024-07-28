@@ -198,13 +198,18 @@ void skip_leading_sign(char **str) {
 /* Function to check if a string contains valid data */
 int is_valid_data(char **str) {
     while (**str != '\0') {
+        skip_leading_sign(str);
         if (!isdigit(**str)) {
             return false;
         }
         strpbrk(*str, ",");
         skip_to_the_next_operand(str);
+        skip_to_next_word(str);
+        if (**str == ' ' || **str == '\t') {
+            (*str)++;
+        }
     }
-return true;
+    return true;
 }
 
 
@@ -274,9 +279,9 @@ char *validation(char *fName) {
                 case 2: /* Code for instructions with 2 operands */
                     skip_to_next_word(&line_ptr);
                     sscanf(line_ptr, " %s", current_word);
-                    printf("current word: %s\n", current_word); /* testing only */
+                    printf("first operand: %s\n", current_word); /* testing only */
                     addres_mode = addressing_method(current_word);
-                    printf("addressing mode: %s\n", addres_mode); /* testing only */
+                    printf("addressing mode of source: %s\n", addres_mode); /* testing only */
                     printf("source: %s\n", instruction_Table[find_in_table(instruction_temp)].source); /* testing only */
                     if (strstr(instruction_Table[find_in_table(instruction_temp)].source, addres_mode) == NULL) { /* check the source operand */
                         fprintf(stdout, "Error at line %d: invalid addressing method\n", line_counter);
@@ -285,9 +290,9 @@ char *validation(char *fName) {
                     }
                     skip_to_the_next_operand(&line_ptr);
                     sscanf(line_ptr, " %s", current_word);
+                    printf("2nd operand: %s\n", current_word); /* testing only */                    
                     addres_mode = addressing_method(current_word);
-                    printf("addressing mode: dest %s\n", addres_mode); /* testing only */
-
+                    printf("addressing mode of dest: %s\n", addres_mode); /* testing only */
                     if (strstr(instruction_Table[find_in_table(instruction_temp)].dest, addres_mode) == NULL) { /* check the destination operand */
                         fprintf(stdout, "Error at line %d: invalid addressing method\n", line_counter);
                         free(current_word);

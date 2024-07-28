@@ -23,7 +23,7 @@ K:      .data 22
 
 
 
-//test 2 current project
+test 2 current project
 MAIN: add r3, LIST
 LOOP: prn #48 
 lea STR, r6 
