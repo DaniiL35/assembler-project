@@ -200,6 +200,10 @@ int is_valid_data(char **str) {
     while (**str != '\0') {
         skip_leading_sign(str);
         if (!isdigit(**str)) {
+            if(**str == ' ' || **str == '\t' || **str == ',') {
+                (*str)++;
+                continue;
+            }
             return false;
         }
         strpbrk(*str, ",");
