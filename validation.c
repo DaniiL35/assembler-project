@@ -6,14 +6,7 @@
 #include "validation.h"
 
 
-/* Structure to represent an instruction */
-struct instruction {
-    char *name;
-    int opcode;
-    const char *source;
-    const char *dest;
-    int num_of_operands;
-};
+
 
 /* Instruction table */
 struct instruction instruction_Table[INSTRUCTION_TABLE_SIZE] = {
@@ -54,7 +47,8 @@ char *addressing_method(char *str) {
     int i = 1;
     int operand_len = strlen(str);
     if (str[0] == '#') { /* immediate addressing */
-        for (i = 1; i < operand_len; i++) {
+        skip_leading_sign(&str);
+        while(*str != ',' && *str != ' ' && *str == '\0') {
             if (!isdigit(str[i])) {
                 printf("Error: invalid immediate addressing\n");
                 return NULL;
@@ -63,8 +57,11 @@ char *addressing_method(char *str) {
         return "0";
     }
     /* Direct Addressing */
-    if (is_alphanumeric_and_upper_string(str, operand_len)) {
-        return "1";
+        if(str[operand_len-1] == ','){
+            operand_len--;
+        }
+        if (is_alphanumeric_and_upper_string(str, operand_len)) {
+            return "1";
     }
 
     if (str[0] == '*') { /* Indirect Register Addressing */
@@ -82,7 +79,7 @@ char *addressing_method(char *str) {
 
 /* Function to check if a string is a valid register */
 int valid_register(char *str) {
-    return (str[0] == 'r' && str[1] >= '0' && str[1] <= '7' && (str[2] == ' ' || str[2] == ',')) ? true : false;
+    return (str[0] == 'r' && str[1] >= '0' && str[1] <= '7' && (str[2] == ' ' || str[2] == ',' || str[2] == '\0')) ? true : false;
 }
 
 /* Function to check if a word is a directive */
@@ -150,9 +147,19 @@ static int is_label(char *word) {
 
 /* Function to skip to the next word in a string */
 void skip_to_next_word(char **str) {
-    char *next_space = strpbrk(*str, " ");
-    if (next_space != NULL) {
-        *str = next_space + 1;
+    /* Skip any leading spaces */
+    while (**str == ' ') {
+        (*str)++;
+    }
+
+    /* Skip the current word until a space, comma, or end of string is found */
+    while (**str != ' ' && **str != ',' && **str != '\0') {
+        (*str)++;
+    }
+
+    /* Skip any trailing spaces after the word */
+    while (**str == ' ') {
+        (*str)++;
     }
 }
 
@@ -198,19 +205,20 @@ void skip_leading_sign(char **str) {
 /* Function to check if a string contains valid data */
 int is_valid_data(char **str) {
     while (**str != '\0') {
+        skip_leading_spaces(str);
         skip_leading_sign(str);
         if (!isdigit(**str)) {
-            if(**str == ' ' || **str == '\t' || **str == ',') {
-                (*str)++;
-                continue;
-            }
             return false;
         }
-        strpbrk(*str, ",");
-        skip_to_the_next_operand(str);
-        skip_to_next_word(str);
-        if (**str == ' ' || **str == '\t') {
+        while (isdigit(**str)) {
             (*str)++;
+        }
+        skip_leading_spaces(str);
+        if (**str == ',') {
+            (*str)++;
+            skip_leading_spaces(str);
+        } else if (**str != '\0') {
+            return false;
         }
     }
     return true;
@@ -225,7 +233,9 @@ char *validation(char *fName) {
     char Current_Line[Max_LINE_LEN];
     char *line_ptr;
     char *addres_mode;
-    char instruction_temp[4];
+    char instruction_temp[5];
+    char first_operand[Max_LINE_LEN];
+    char second_operand[Max_LINE_LEN];
     char *current_word = (char *)malloc(Max_LINE_LEN * sizeof(char));
     char *am_file_name = strcatWithMalloc(fName, am_file_ext);
     FILE *am_file = openFileAndCheck(am_file_name, "r");
@@ -235,7 +245,7 @@ char *validation(char *fName) {
     /* reading line by line from the am file */
     while (fgets(Current_Line, Max_LINE_LEN, am_file) != 0) {
         line_ptr = Current_Line;
-        printf("Current line: %s\n", Current_Line); /* testing only */
+        printf("Current line: %s", Current_Line); /* testing only */
         line_counter++;
         /* skip empty lines and comments */
         if (is_empty(Current_Line) || Current_Line[0] == ';') {
@@ -245,7 +255,7 @@ char *validation(char *fName) {
         sscanf(Current_Line, " %s", current_word);
         if (is_label(current_word)) {
             skip_to_next_word(&line_ptr); /* skip the label */ 
-            printf("line ptr: %s\n", line_ptr); /* testing only */    
+            printf("line ptr after label: %s\n", line_ptr); /* testing only */    
         if (is_label(current_word) == -1) {
                 fprintf(stdout, "Error at line %d: invalid label format\n", line_counter);
                 free(current_word);
@@ -259,11 +269,16 @@ char *validation(char *fName) {
         /* check if the word is an instruction */
         sscanf(line_ptr, " %s", current_word);
         if (is_instruction(current_word)) {
+            printf("instruction found: %s\n", current_word); /* testing only */
+            printf("Initial Current_Line: %s\n", Current_Line); /* Debugging */
             strcpy(instruction_temp, current_word);
+            printf(" Current_Line: after strcpy: %s\n", Current_Line); /* Debugging */
             printf ("instruction_temp: %s\n", instruction_temp); /* testing only */
-            printf("number of operands: %d\n", instruction_Table[find_in_table(current_word)].num_of_operands); /* testing only */
+            printf("number of operands: %d\n", instruction_Table[find_in_table(current_word)].
+            num_of_operands); /* testing only */
             switch (instruction_Table[find_in_table(current_word)].num_of_operands) {
                 case 0: /* Code for instructions with 0 operands */
+                    printf("Processing instruction with 0 operands: %s\n", Current_Line); /* Debugging */
                     fputs(Current_Line, temp_file);
                     break;
                 case 1: /* Code for instructions with 1 operand */
@@ -272,19 +287,34 @@ char *validation(char *fName) {
                     printf("current word: %s\n", current_word); /* testing only */
                     addres_mode = addressing_method(current_word);
                     printf("addressing mode: %s\n", addres_mode); /* testing only */
-                    if (strstr(instruction_Table[find_in_table(instruction_temp)].source, addres_mode) != NULL) {
-                        fputs(Current_Line, temp_file);
+                    
+                    /* Check if the source operand is empty */
+                    if (strcmp(instruction_Table[find_in_table(instruction_temp)].source, "") == 0) {
+                        /* Check the destination operand */
+                        if (strstr(instruction_Table[find_in_table(instruction_temp)].dest, addres_mode) != NULL) {
+                            fputs(Current_Line, temp_file);
+                        } else {
+                            fprintf(stdout, "Error at line %d: invalid addressing method\n", line_counter);
+                            free(current_word);
+                            return NULL;
+                        }
                     } else {
-                        fprintf(stdout, "Error at line %d: invalid addressing method\n", line_counter);
-                        free(current_word);
-                        return NULL;
+                        /* Check the source operand */
+                        if (strstr(instruction_Table[find_in_table(instruction_temp)].source, addres_mode) != NULL) {
+                            fputs(Current_Line, temp_file);
+                        } else {
+                            fprintf(stdout, "Error at line %d: invalid addressing method\n", line_counter);
+                            free(current_word);
+                            return NULL;
+                        }
                     }
                     break;
                 case 2: /* Code for instructions with 2 operands */
                     skip_to_next_word(&line_ptr);
-                    sscanf(line_ptr, " %s", current_word);
-                    printf("first operand: %s\n", current_word); /* testing only */
-                    addres_mode = addressing_method(current_word);
+                    printf("line_ptr: %s\n", line_ptr); /* testing only */
+                    sscanf(line_ptr, " %s", first_operand);
+                    printf("first operand: %s\n", first_operand); /* testing only */
+                    addres_mode = addressing_method(first_operand);
                     printf("addressing mode of source: %s\n", addres_mode); /* testing only */
                     printf("source: %s\n", instruction_Table[find_in_table(instruction_temp)].source); /* testing only */
                     if (strstr(instruction_Table[find_in_table(instruction_temp)].source, addres_mode) == NULL) { /* check the source operand */
