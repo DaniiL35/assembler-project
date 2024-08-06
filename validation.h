@@ -4,6 +4,10 @@
 /* Constants */
 #define MAX_LABEL_LENGTH 31
 #define INSTRUCTION_TABLE_SIZE 16
+#define REGISTER_TABLE_SIZE 8
+#define DIRECTIVE_TABLE_SIZE 5
+#define INSTRUCTION_LENGTH 5
+#define operand_length 30
 
 /* Structure declarations */
 typedef enum {
@@ -22,7 +26,7 @@ struct instruction {
 
 /* Function declarations */
 int valid_register(char *str);
-static int is_alphanumeric_and_upper_string(const char *str, int length);
+static int is_alphanumeric_string(const char *str, int length);
 void skip_leading_sign(char **str);
 void skip_to_next_word(char **str);
 void skip_to_the_next_operand(char **str);

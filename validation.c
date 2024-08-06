@@ -60,7 +60,7 @@ char *addressing_method(char *str) {
         if(str[operand_len-1] == ','){
             operand_len--;
         }
-        if (is_alphanumeric_and_upper_string(str, operand_len)) {
+        if (is_alphanumeric_string(str, operand_len)) {
             return "1";
     }
 
@@ -117,10 +117,10 @@ int is_instruction(char *word) {
 }
 
 /* Function to check if a string is alphanumeric */
-static int is_alphanumeric_and_upper_string(const char *str, int length) {
+static int is_alphanumeric_string(const char *str, int length) {
     int i;
     for (i = 0; i < length; i++) {
-        if (!isalnum(str[i]) || !isupper(str[i])) {
+        if (!isalnum(str[i])) {
             return false;
         }
     }
@@ -134,8 +134,12 @@ static int is_label(char *word) {
     sscanf(word, "%s", label);
     label_len = strlen(label);
 
+    if(isdigit(label[0])){
+        return -1;
+    }
+
     if (label[label_len - 1] == ':'){
-        if(is_alphanumeric_and_upper_string(label,label_len-1)){
+        if(is_alphanumeric_string(label,label_len-1)){
             return 1;
         }
         else
@@ -223,8 +227,40 @@ int is_valid_data(char **str) {
     }
     return true;
 }
+/* Function to validate that a string has exactly two quotes and contains only valid characters inside the quotes */
+int validate_string(char *line) {
+    int len = strlen(line);
+    int i;
+    
+    /* Check if the string starts and ends with a quote */
+    if (line[0] != '"' || line[len - 2] != '"') {
+        return false;
+    }
 
+    /* Check that characters between quotes are alphabetic */
+    for (i = 1; i < len - 3; i++) {
+        if (!isalpha(line[i])) {
+            return false;
+        }
+    }
 
+    return true;
+}
+/* Function to remove the trailing comma from a string */
+void remove_comma(char *str) {
+    size_t len = strlen(str);
+    if (str[len - 1] == ',') {
+        str[len - 1] = '\0';
+    }
+}
+
+/* Function to remove trailing newline characters from a string */
+void remove_trailing_newline(char *str) {
+    size_t len = strlen(str);
+    if (len > 0 && str[len - 1] == '\n') {
+        str[len - 1] = '\0';
+    }
+}
 
 
 /* Function for validation */
@@ -233,9 +269,13 @@ char *validation(char *fName) {
     char Current_Line[Max_LINE_LEN];
     char *line_ptr;
     char *addres_mode;
+    char *quote_ptr;
+    char label[Max_LINE_LEN];
     char instruction_temp[5];
     char first_operand[Max_LINE_LEN];
     char second_operand[Max_LINE_LEN];
+    char directive_temp[10];
+    char formated_line[9000];
     char *current_word = (char *)malloc(Max_LINE_LEN * sizeof(char));
     char *am_file_name = strcatWithMalloc(fName, am_file_ext);
     FILE *am_file = openFileAndCheck(am_file_name, "r");
@@ -244,16 +284,21 @@ char *validation(char *fName) {
 
     /* reading line by line from the am file */
     while (fgets(Current_Line, Max_LINE_LEN, am_file) != 0) {
-        line_ptr = Current_Line;
+        line_ptr = Current_Line; /* set the pointer to the beginning of the line */
         printf("Current line: %s", Current_Line); /* testing only */
-        line_counter++;
+        line_counter++; /* increment the line counter */
+        
+        
         /* skip empty lines and comments */
         if (is_empty(Current_Line) || Current_Line[0] == ';') {
             continue;
         }
+
+
         /* for lines with labels */
         sscanf(Current_Line, " %s", current_word);
         if (is_label(current_word)) {
+            strcpy(label, current_word);
             skip_to_next_word(&line_ptr); /* skip the label */ 
             printf("line ptr after label: %s\n", line_ptr); /* testing only */    
         if (is_label(current_word) == -1) {
@@ -262,9 +307,11 @@ char *validation(char *fName) {
                 continue;
             }
         }
-        else
+        else{
+            /* if the line doesn't have a label */
             printf("No label\n"); /* testing only */
-
+            strcpy(label, "0");
+        }
         /* for lines without labels or after the label word */
         /* check if the word is an instruction */
         sscanf(line_ptr, " %s", current_word);
@@ -279,7 +326,9 @@ char *validation(char *fName) {
             switch (instruction_Table[find_in_table(current_word)].num_of_operands) {
                 case 0: /* Code for instructions with 0 operands */
                     printf("Processing instruction with 0 operands: %s\n", Current_Line); /* Debugging */
-                    fputs(Current_Line, temp_file);
+                    sprintf(formated_line, "%s %s\n" ,label,instruction_temp);
+                    printf("Formatted line: %s\n", formated_line);
+                    fputs(formated_line, temp_file);
                     break;
                 case 1: /* Code for instructions with 1 operand */
                     skip_to_next_word(&line_ptr);
@@ -287,12 +336,15 @@ char *validation(char *fName) {
                     printf("current word: %s\n", current_word); /* testing only */
                     addres_mode = addressing_method(current_word);
                     printf("addressing mode: %s\n", addres_mode); /* testing only */
+                    strcpy(first_operand, current_word);
                     
                     /* Check if the source operand is empty */
                     if (strcmp(instruction_Table[find_in_table(instruction_temp)].source, "") == 0) {
                         /* Check the destination operand */
                         if (strstr(instruction_Table[find_in_table(instruction_temp)].dest, addres_mode) != NULL) {
-                            fputs(Current_Line, temp_file);
+                            sprintf(formated_line, "%s %s %s\n",label,instruction_temp, first_operand);
+                            printf("formated line: %s\n", formated_line); /* testing only */
+                            fputs(formated_line, temp_file);
                         } else {
                             fprintf(stdout, "Error at line %d: invalid addressing method\n", line_counter);
                             free(current_word);
@@ -301,6 +353,7 @@ char *validation(char *fName) {
                     } else {
                         /* Check the source operand */
                         if (strstr(instruction_Table[find_in_table(instruction_temp)].source, addres_mode) != NULL) {
+                            sprintf(formated_line, "%s %s %s\n",label,instruction_temp, first_operand);
                             fputs(Current_Line, temp_file);
                         } else {
                             fprintf(stdout, "Error at line %d: invalid addressing method\n", line_counter);
@@ -323,9 +376,9 @@ char *validation(char *fName) {
                         return NULL;
                     }
                     skip_to_the_next_operand(&line_ptr);
-                    sscanf(line_ptr, " %s", current_word);
-                    printf("2nd operand: %s\n", current_word); /* testing only */                    
-                    addres_mode = addressing_method(current_word);
+                    sscanf(line_ptr, " %s", second_operand);
+                    printf("2nd operand: %s\n", second_operand); /* testing only */                    
+                    addres_mode = addressing_method(second_operand);
                     printf("addressing mode of dest: %s\n", addres_mode); /* testing only */
                     if (strstr(instruction_Table[find_in_table(instruction_temp)].dest, addres_mode) == NULL) { /* check the destination operand */
                         fprintf(stdout, "Error at line %d: invalid addressing method\n", line_counter);
@@ -333,7 +386,9 @@ char *validation(char *fName) {
                         return NULL;
                     }
                     printf("checked both operands\n"); /* testing only */
-                    fputs(Current_Line, temp_file);
+                    remove_comma(first_operand);
+                    sprintf(formated_line, "%s %s %s %s\n",label,instruction_temp, first_operand, second_operand);
+                    fputs(formated_line, temp_file);
                     break;
                 default:
                     printf("Error at line %d: invalid number of operands\n", line_counter);
@@ -343,17 +398,29 @@ char *validation(char *fName) {
         } else if (is_directive(current_word)) {
             switch (is_directive(current_word)) {
                 case 1: /* Code for .data directive */
-                    skip_to_next_word(&current_word);
+                    strcpy(directive_temp, current_word);
+                    skip_to_next_word(&current_word);         
                     if (!is_valid_data(&current_word)) {
                         fprintf(stdout, "Error at line %d: invalid data\n", line_counter);
                         free(current_word);
                         return NULL;
                     }
-                    fputs(Current_Line, temp_file);
+                    sprintf(formated_line, "%s %s %s\n",label,directive_temp, current_word);
+                    fputs(formated_line, temp_file);
                     break;
                 case 2: /* Code for .string directive */
-                    skip_to_next_word(&current_word);
-                    
+                    strcpy(directive_temp, current_word);
+                    quote_ptr = strchr(line_ptr, '\"');
+                    strcpy(first_operand, quote_ptr);
+                    printf("quote_ptr: %s\n", quote_ptr); /* testing only */
+                    if (!validate_string(quote_ptr)) {
+                        fprintf(stdout, "Error at line %d: invalid string\n", line_counter);
+                        free(current_word);
+                        return NULL;
+                    }
+                    remove_trailing_newline(first_operand); 
+                    sprintf(formated_line, "%s %s %s\n",label,directive_temp, first_operand);
+                    fputs(formated_line, temp_file);
                     break;
                 case 3: /* Code for .entry directive */
                     skip_to_next_word(&current_word);
@@ -383,16 +450,11 @@ char *validation(char *fName) {
             free(current_word);
             return NULL;
         }
-    printf("finished line %d\n", line_counter); /* testing only */
     printf("finished validate line %d\n", line_counter); /* testing only */    
-
-
-    
     }
     fclose(temp_file);
     fclose(am_file);
     free(am_file_name);
-    free(current_word);
     return NULL;
 }
 
