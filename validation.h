@@ -26,7 +26,7 @@ struct instruction {
 
 /* Function declarations */
 int valid_register(char *str);
-static int is_alphanumeric_string(const char *str, int length);
+int is_alphanumeric_string(const char *str, int length);
 void skip_leading_sign(char **str);
 void skip_to_next_word(char **str);
 void skip_to_the_next_operand(char **str);
@@ -36,7 +36,7 @@ int is_valid_data(char **str);
 int is_directive(char *word);
 int is_empty(const char *line);
 int is_instruction(char *word);
-static int is_label(char *word);
+int is_label(char *word);
 char *addressing_method(char *str);
 int find_in_table(char *word);
 char *validation(char *fName);

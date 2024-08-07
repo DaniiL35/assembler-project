@@ -1,24 +1,22 @@
-# Compiler
+# Compilation macros
 CC = gcc
-CFLAGS = -Wall -ansi -pedantic -g
-FOLDERNAME = Assembler-Project
-SRCS = ${shell ls *.c}
-OBJS = $(SRCS:.c=.o)
-LIB = ${shell ls *.h} 
-# Executable
-TARGET = pj14
+CFLAGS = -ansi -Wall -pedantic -g -Iinclude # Flags
+#GLOBAL_DEPS = include/globals.h # Dependencies for everything
+EXE_DEPS = assembler.o preprocessor.o validation.o  # Deps for exe
 
-# Default target
-all: $(TARGET)
+## Executable
+assembler: $(EXE_DEPS)
+    $(CC) -g $(EXE_DEPS) $(CFLAGS) -o $@
 
-# Compile source files into object files
-%.o: %.c $(LIB)
-	$(CC) $(CFLAGS) $ -c $< -o $@
+assembler.o: src/assembler.c include/assembler.h $(EXE_DEPS)
+    $(CC) -c src/assembler.c $(CFLAGS) -o $@
 
-# Link object files into executable
-$(TARGET): $(OBJS) $(LIB)
-	$(CC) $(CFLAGS) $(OBJS) -o $@
+preprocessor.o: src/preprocessor.c include/preprocessor.h $(EXE_DEPS)
+    $(CC) -c src/preprocessor.c $(CFLAGS) -o $@
 
-# Clean up object files and executable
+validation.o: src/validation.c include/validation.h $(EXE_DEPS)
+    $(CC) -c src/validation.c $(CFLAGS) -o $@
+
+
 clean:
-	rm -f $(OBJS) $(TARGET)
+    rm -rf *.o assembler

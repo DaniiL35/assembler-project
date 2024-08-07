@@ -1,6 +1,5 @@
 MAIN: add r3 LIST
 LOOP: prn #48
-0 lea STR r6
 0 inc r6
 0 mov *r6 K
 0 sub r1 r4
@@ -9,7 +8,6 @@ LOOP: prn #48
 0 dec K
 0 jmp LOOP
 END: stop
-0 .string "ab"
 STR: .string "abcd"
 LIST: .data 
 0 .data 
