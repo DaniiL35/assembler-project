@@ -5,7 +5,7 @@
 
 /* Main function */
 int main() {
-    char *fName = "test";
+    char *fName = "ftest/test";
     preprocessor(fName);
     validation(fName);
     return 0;

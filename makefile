@@ -1,22 +1,23 @@
 # Compilation macros
 CC = gcc
-CFLAGS = -ansi -Wall -pedantic -g -Iinclude # Flags
-#GLOBAL_DEPS = include/globals.h # Dependencies for everything
-EXE_DEPS = assembler.o preprocessor.o validation.o  # Deps for exe
+CFLAGS = -ansi -Wall -pedantic -g -IHeader -ISourceFiles # Include Header and SourceFiles directories for headers
+GLOBAL_DEPS = Header/globals.h # Dependencies for everything
+EXE_DEPS = SourceFiles/assembler.o SourceFiles/preprocessor.o SourceFiles/validation.o # Deps for exe
 
-## Executable
-assembler: $(EXE_DEPS)
-    $(CC) -g $(EXE_DEPS) $(CFLAGS) -o $@
+# Executable
+assembler: $(EXE_DEPS) $(GLOBAL_DEPS)
+	$(CC) $(EXE_DEPS) $(CFLAGS) -o $@
 
-assembler.o: src/assembler.c include/assembler.h $(EXE_DEPS)
-    $(CC) -c src/assembler.c $(CFLAGS) -o $@
+# Object files
+SourceFiles/assembler.o: SourceFiles/assembler.c $(GLOBAL_DEPS)
+	$(CC) -c SourceFiles/assembler.c $(CFLAGS) -o $@
 
-preprocessor.o: src/preprocessor.c include/preprocessor.h $(EXE_DEPS)
-    $(CC) -c src/preprocessor.c $(CFLAGS) -o $@
+SourceFiles/preprocessor.o: SourceFiles/preprocessor.c $(GLOBAL_DEPS)
+	$(CC) -c SourceFiles/preprocessor.c $(CFLAGS) -o $@
 
-validation.o: src/validation.c include/validation.h $(EXE_DEPS)
-    $(CC) -c src/validation.c $(CFLAGS) -o $@
+SourceFiles/validation.o: SourceFiles/validation.c $(GLOBAL_DEPS)
+	$(CC) -c SourceFiles/validation.c $(CFLAGS) -o $@
 
-
+# Clean up
 clean:
-    rm -rf *.o assembler
+	rm -rf SourceFiles/*.o assembler
