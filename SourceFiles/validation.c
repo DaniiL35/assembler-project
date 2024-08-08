@@ -178,12 +178,20 @@ void skip_to_the_next_operand(char **str) {
         *str = next_comma;
     }
 }
+
 /* Function to skip leading spaces in a string */
 void skip_leading_spaces(char **str) {
     while (**str == ' ') {
         (*str)++;
     }
 }
+
+void skip_leading_sign(char **str) {
+    if (**str == '-' || **str == '+') {
+        (*str)++;
+    }
+}
+
 /* Function to check if a string represents a valid integer */
 int is_valid_integer(char *str) {
     if (*str == '-' || *str == '+') {
@@ -200,11 +208,7 @@ int is_valid_integer(char *str) {
     }
     return true;
 }
-void skip_leading_sign(char **str) {
-    if (**str == '-' || **str == '+') {
-        (*str)++;
-    }
-}
+
 
 /* Function to check if a string contains valid data */
 int is_valid_data(char **str) {
