@@ -18,7 +18,7 @@ const char *invalid_macro_names[invalid_macro_table_size] = {
     "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7", "macro", "endmacr", "data", "string", "entry", "extern"
 };
 
-/* Hash table structure */
+/* Macro table structure */
 struct MacroTable {
     struct Macro *table[TABLE_SIZE];
 };
