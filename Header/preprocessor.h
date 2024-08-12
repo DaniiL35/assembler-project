@@ -1,21 +1,20 @@
 #ifndef PREPROCESSOR_H
 #define PREPROCESSOR_H
 
-#include <stdio.h>
+#include "utils.h"
 
 /* Constants */
-#define as_file_ext         ".as"
-#define am_file_ext         ".am"
+
 #define Max_macro_len_name  256
-#define Max_LINE_LEN        80
 #define Macro_start         "macr"
 #define Macro_end           "endmacr"
-#define TABLE_SIZE          1000
 #define invalid_macro_table_size 30
 
 /* Structure declarations */
 struct Macro;
 struct MacroTable;
+
+
 
 /* Function declarations */
 unsigned int hash(char *str);

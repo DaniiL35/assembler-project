@@ -1,10 +1,5 @@
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <ctype.h>
-#include "preprocessor.h"
 #include "validation.h"
-#include "reordering.c"
+
 
 
 
@@ -271,25 +266,25 @@ void remove_trailing_newline(char *str) {
 /* Function for validation */
 char *validation(char *fName) {
     int line_counter = 0;
-    char Current_Line[Max_LINE_LEN];
+    char Current_Line[MAX_LINE_LEN];
     char *line_ptr;
     char *addres_mode;
     char *quote_ptr;
-    char label[Max_LINE_LEN];
+    char label[MAX_LINE_LEN];
     char instruction_temp[5];
-    char first_operand[Max_LINE_LEN];
-    char second_operand[Max_LINE_LEN];
+    char first_operand[MAX_LINE_LEN];
+    char second_operand[MAX_LINE_LEN];
     char directive_temp[10];
     char formated_line[9000];
-    char *current_word = (char *)malloc(Max_LINE_LEN * sizeof(char));
-    char *am_file_name = strcatWithMalloc(fName, am_file_ext);
+    char *current_word = (char *)malloc(MAX_LINE_LEN * sizeof(char));
+    char *am_file_name = strcatWithMalloc(fName, AM_FILE_EXT);
     FILE *am_file = openFileAndCheck(am_file_name, "r");
     FILE *temp_file = openFileAndCheck("temp.am", "w");
     char *tempFileName = malloc(strlen(am_file_name) + 1);
     printf("Reading started\n"); /* testing only */
 
     /* reading line by line from the am file */
-    while (fgets(Current_Line, Max_LINE_LEN, am_file) != 0) {
+    while (fgets(Current_Line, MAX_LINE_LEN, am_file) != 0) {
         line_ptr = Current_Line; /* set the pointer to the beginning of the line */
         printf("Current line: %s", Current_Line); /* testing only */
         line_counter++; /* increment the line counter */

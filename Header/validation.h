@@ -1,6 +1,11 @@
 #ifndef VALIDATION_H
 #define VALIDATION_H
 
+
+#include "utils.h"
+#include "reordering.h"
+
+
 /* Constants */
 #define MAX_LABEL_LENGTH 31
 #define INSTRUCTION_TABLE_SIZE 16
@@ -9,11 +14,8 @@
 #define INSTRUCTION_LENGTH 5
 #define operand_length 30
 
-/* Structure declarations */
-typedef enum {
-    false,
-    true
-} bool;
+
+
 
 /* Structure to represent an instruction */
 struct instruction {

@@ -1,8 +1,5 @@
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <ctype.h>
 #include "preprocessor.h"
+
 
 /* Macro structure */
 struct Macro {
@@ -23,17 +20,7 @@ struct MacroTable {
     struct Macro *table[TABLE_SIZE];
 };
 
-/* Hash function */
-unsigned int hash(char *str) {
-    unsigned int hash = 5381;
-    int c;
-    unsigned int index;
-    while ((c = *str++)) {
-        hash = ((hash << 5) + hash) + c;
-    }
-    index = hash % TABLE_SIZE;
-    return index;
-}
+
 
 /* Initialize the hash table */
 void initMacroTable(struct MacroTable *mTable) {
@@ -51,7 +38,7 @@ void freeMacroTable(struct MacroTable *mTable) {
         while (macro != NULL) {
             struct Macro *temp = macro;
             macro = macro->next;
-            for ( j = 0; j < Max_LINE_LEN; j++) {
+            for ( j = 0; j < MAX_LINE_LEN; j++) {
                 free(temp->lines[j]);
             }
             free(temp->lines);
@@ -76,31 +63,9 @@ struct Macro *search_macro(struct MacroTable *mTable, char *name) {
     }
     return macro;
 }
-/* Function to combine two strings with malloc */
-char *strcatWithMalloc(const char *str1, const char *str2) {
-    int totalLength = strlen(str1) + strlen(str2) + 1;
-    char *fullName = (char *)malloc(totalLength);
-    if (fullName == NULL) {
-        exit(EXIT_FAILURE);
-    }
-    strcpy(fullName, str1);
-    strcat(fullName, str2);
-    return fullName;
-}
-
-
-/* Function to open a file and check if it was opened successfully */
-FILE *openFileAndCheck(const char *filePath, const char *mode) {
-    FILE *file = fopen(filePath, mode);
-    if (file == NULL) {
-        exit(EXIT_FAILURE);
-    }
-    return file;
-}
-
 
 int macro_line(char *line_buffer, struct Macro **currentMacro, struct MacroTable *mTable) {
-    char *p1 = line_buffer, firstWord[Max_LINE_LEN], macro_name[Max_LINE_LEN];
+    char *p1 = line_buffer, firstWord[MAX_LINE_LEN], macro_name[MAX_LINE_LEN];
     struct Macro *newMacro = NULL;
     int i = 0;
     int j;
@@ -138,13 +103,13 @@ int macro_line(char *line_buffer, struct Macro **currentMacro, struct MacroTable
         /* create a new macro */
         strcpy(newMacro->mName, macro_name);
         newMacro->lineC = 0;
-        newMacro->lines = (char **)malloc(Max_LINE_LEN * sizeof(char *));
+        newMacro->lines = (char **)malloc(MAX_LINE_LEN * sizeof(char *));
         if (newMacro->lines == NULL) {
             free(newMacro);
             exit(EXIT_FAILURE);
         }
-        for (i = 0; i < Max_LINE_LEN; i++) {
-            newMacro->lines[i] = (char *)malloc(Max_LINE_LEN * sizeof(char));
+        for (i = 0; i < MAX_LINE_LEN; i++) {
+            newMacro->lines[i] = (char *)malloc(MAX_LINE_LEN * sizeof(char));
             if (newMacro->lines[i] == NULL) {
                 for (j = 0; j < i; j++) {
                     free(newMacro->lines[j]);
@@ -178,7 +143,7 @@ int macro_line(char *line_buffer, struct Macro **currentMacro, struct MacroTable
 
 /* Function to preprocess the as file */
 char *preprocessor(char *fName) {
-    char Current_Line[Max_LINE_LEN];
+    char Current_Line[MAX_LINE_LEN];
     char *as_file_name;
     char *am_file_name;
     int i = 0;
@@ -187,12 +152,12 @@ char *preprocessor(char *fName) {
     struct Macro *currentMacro = NULL;
     struct MacroTable mTable;
     initMacroTable(&mTable);
-    as_file_name = strcatWithMalloc(fName, as_file_ext);
-    am_file_name = strcatWithMalloc(fName, am_file_ext);
+    as_file_name = strcatWithMalloc(fName, AS_FILE_EXT);
+    am_file_name = strcatWithMalloc(fName, AM_FILE_EXT);
     as_file = openFileAndCheck(as_file_name, "r");
     am_file = openFileAndCheck(am_file_name, "w");
     /* reading line by line from the as file */
-    while (fgets(Current_Line, Max_LINE_LEN, as_file) != 0) { 
+    while (fgets(Current_Line, MAX_LINE_LEN, as_file) != 0) { 
         switch (macro_line(Current_Line, &currentMacro, &mTable)) { 
             case 0: /* start of macro def */
                 /* logic needs to be implemented */

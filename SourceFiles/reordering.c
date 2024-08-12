@@ -1,8 +1,5 @@
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
 
-#define MAX_LINE_LEN 1000
+#include "reordering.h"
 
 void reorder_lines(const char *source_file) {
     char output_file[MAX_LINE_LEN];
