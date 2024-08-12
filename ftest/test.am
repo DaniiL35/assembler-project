@@ -1,15 +1,14 @@
-MAIN:   add  r3, LIST
-LOOP:   prn  #48
-        lea  STR r6
-        inc  r6
-        mov  *r6, K
-        sub  r1, r4
-        cmp  r3, #-6
-        bne  END
-        dec  K
-        jmp  LOOP
-END:    stop
-STR:    .string "abcd"
-LIST:   .data 6, -9
-.data  -100
-K:      .data 31
+MAIN: add r3 LIST
+LOOP: prn #48
+0 inc r6
+0 mov *r6 K
+0 sub r1 r4
+0 cmp r3 #-6
+0 bne END
+0 dec K
+0 jmp LOOP
+END: stop
+STR: .string "abcd"
+LIST: .data 
+0 .data 
+K: .data 

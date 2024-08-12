@@ -18,6 +18,10 @@ SourceFiles/preprocessor.o: SourceFiles/preprocessor.c $(GLOBAL_DEPS)
 SourceFiles/validation.o: SourceFiles/validation.c $(GLOBAL_DEPS)
 	$(CC) -c SourceFiles/validation.c $(CFLAGS) -o $@
 
+SourceFiles/reordering.o: SourceFiles/reordering.c $(GLOBAL_DEPS)
+		$(CC) -c SourceFiles/reordering.c $(CFLAGS) -o $@
+
 # Clean up
 clean:
 	rm -rf SourceFiles/*.o assembler
+

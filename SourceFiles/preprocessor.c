@@ -43,6 +43,23 @@ void initMacroTable(struct MacroTable *mTable) {
     }
 }
 
+/* Function to free the macro table */
+void freeMacroTable(struct MacroTable *mTable) {
+    int i, j;
+    for ( i = 0; i < TABLE_SIZE; i++) {
+        struct Macro *macro = mTable->table[i];
+        while (macro != NULL) {
+            struct Macro *temp = macro;
+            macro = macro->next;
+            for ( j = 0; j < Max_LINE_LEN; j++) {
+                free(temp->lines[j]);
+            }
+            free(temp->lines);
+            free(temp);
+        }
+    }
+}
+
 /* Insert a macro into the hash table */
 void insertMacro(struct MacroTable *mTable, struct Macro *macro) {
     unsigned int index = hash(macro->mName);
@@ -82,39 +99,60 @@ FILE *openFileAndCheck(const char *filePath, const char *mode) {
 }
 
 
-/* Function to check the type of the line */
 int macro_line(char *line_buffer, struct Macro **currentMacro, struct MacroTable *mTable) {
     char *p1 = line_buffer, firstWord[Max_LINE_LEN], macro_name[Max_LINE_LEN];
-    struct Macro *newMacro = (struct Macro *)malloc(sizeof(struct Macro));
+    struct Macro *newMacro = NULL;
     int i = 0;
+    int j;
     sscanf(p1, " %s %s", firstWord, macro_name); /* get the first word in the line */
     
     /* macro def */
     if (strcmp(firstWord, Macro_start) == 0) {
+        newMacro = (struct Macro *)malloc(sizeof(struct Macro));
+        if (newMacro == NULL) {
+            exit(EXIT_FAILURE);
+        }
         
-         /* Check if the macro name starts with a digit */
+        /* Check if the macro name starts with a digit */
         if (isdigit(macro_name[0])) {
             printf("Error: Macro name '%s' cannot start with a digit.\n", macro_name);
+            free(newMacro);
             return -1;
         }
-          /* Check if the macro name starts with an invalid name */
+        
+        /* Check if the macro name starts with an invalid name */
         for (i = 0; i < invalid_macro_table_size; i++) {
             if (strncmp(macro_name, invalid_macro_names[i], strlen(invalid_macro_names[i])) == 0) {
                 printf("Error: Macro name '%s' cannot start with '%s'.\n", macro_name, invalid_macro_names[i]);
+                free(newMacro);
                 return -1;
             }
         }
         
         /* check if the macro already exists */
         if (search_macro(mTable, macro_name) != NULL) { 
+            free(newMacro);
             return -1;
         }
+        
         /* create a new macro */
         strcpy(newMacro->mName, macro_name);
         newMacro->lineC = 0;
         newMacro->lines = (char **)malloc(Max_LINE_LEN * sizeof(char *));
+        if (newMacro->lines == NULL) {
+            free(newMacro);
+            exit(EXIT_FAILURE);
+        }
         for (i = 0; i < Max_LINE_LEN; i++) {
             newMacro->lines[i] = (char *)malloc(Max_LINE_LEN * sizeof(char));
+            if (newMacro->lines[i] == NULL) {
+                for (j = 0; j < i; j++) {
+                    free(newMacro->lines[j]);
+                }
+                free(newMacro->lines);
+                free(newMacro);
+                exit(EXIT_FAILURE);
+            }
         }
         insertMacro(mTable, newMacro);
         *currentMacro = newMacro;
@@ -181,15 +219,10 @@ char *preprocessor(char *fName) {
     fclose(as_file);
     fclose(am_file);
     free(as_file_name);
+    free(am_file_name);
+    freeMacroTable(&mTable);
+
     return am_file_name;
-}
 
-
-/* test main function 
-int main() {
-    char *fName = "test";
-    preprocessor(fName);
-    return 0;
 }
-*/
 

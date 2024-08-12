@@ -5,7 +5,8 @@
         "hashtable by chatgpt": "c",
         "typeinfo": "c",
         "preprocessor.h": "c",
-        "limits": "c"
+        "limits": "c",
+        "label_table.h": "c"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

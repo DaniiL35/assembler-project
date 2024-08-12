@@ -4,6 +4,7 @@
 #include <ctype.h>
 #include "preprocessor.h"
 #include "validation.h"
+#include "reordering.c"
 
 
 
@@ -284,6 +285,7 @@ char *validation(char *fName) {
     char *am_file_name = strcatWithMalloc(fName, am_file_ext);
     FILE *am_file = openFileAndCheck(am_file_name, "r");
     FILE *temp_file = openFileAndCheck("temp.am", "w");
+    char *tempFileName = malloc(strlen(am_file_name) + 1);
     printf("Reading started\n"); /* testing only */
 
     /* reading line by line from the am file */
@@ -307,7 +309,6 @@ char *validation(char *fName) {
             printf("line ptr after label: %s\n", line_ptr); /* testing only */    
         if (is_label(current_word) == -1) {
                 fprintf(stdout, "Error at line %d: invalid label format\n", line_counter);
-                free(current_word);
                 continue;
             }
         }
@@ -470,8 +471,34 @@ char *validation(char *fName) {
     }
     fclose(temp_file);
     fclose(am_file);
+
+
+/* Reordering lines */
+reorder_lines("temp.am");
+
+/* Copy the original file name to tempFileName */
+strcpy(tempFileName, am_file_name);
+
+/* Remove the original file */
+if (remove(am_file_name) != 0) {
+    perror("Error deleting original file");
+    exit(1);
+}
+
+/* Rename the output file to the original file name */
+if (rename("output.am", tempFileName) != 0) {
+    perror("Error renaming file");
+    exit(1);
+}
+
+    /* Free allocated memory */
     free(am_file_name);
-    return "temp.am";
+    free(tempFileName);
+    free(current_word);
+
+
+    /* Return the new file name */
+    return tempFileName;
 
 }
 
