@@ -2,7 +2,7 @@
 CC = gcc
 CFLAGS = -ansi -Wall -pedantic -g -IHeader -ISourceFiles # Include Header and SourceFiles directories for headers
 GLOBAL_DEPS = Header/globals.h # Dependencies for everything
-EXE_DEPS = SourceFiles/assembler.o SourceFiles/preprocessor.o SourceFiles/validation.o SourceFiles/reordering.o SourceFiles/utils.o # Deps for exe
+EXE_DEPS = SourceFiles/assembler.o SourceFiles/preprocessor.o SourceFiles/validation.o SourceFiles/reordering.o SourceFiles/utils.o SourceFiles/firstpass.o # Deps for exe
 
 # Executable
 assembler: $(EXE_DEPS) $(GLOBAL_DEPS)
@@ -21,8 +21,9 @@ SourceFiles/validation.o: SourceFiles/validation.c Header/globals.h
 SourceFiles/reordering.o: SourceFiles/reordering.c Header/globals.h
 	$(CC) -c SourceFiles/reordering.c $(CFLAGS) -o $@
 
-SourceFiles/utils.o: SourceFiles/utils.c $(GLOBAL_DEPS)
-	$(CC) -c SourceFiles/utils.c $(CFLAGS) -o $@	
+SourceFiles/firstpass.o: SourceFiles/firstpass.c Header/firstpass.h
+	$(CC) -c SourceFiles/firstpass.c $(CFLAGS) -o $@
+
 
 # Clean up
 clean:
