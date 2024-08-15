@@ -6,6 +6,15 @@
 
 // Declare any global variables or constants
 
+// Declare struct definitions
+struct Label {
+    char name[WORD_LEN];
+    int address;
+    int extern;
+    int entry;
+    struct label *next;
+
+};
 // Declare function prototypes
 
 #endif // FIRSTPASS_H

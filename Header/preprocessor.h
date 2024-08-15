@@ -17,7 +17,6 @@ struct MacroTable;
 
 
 /* Function declarations */
-unsigned int hash(char *str);
 void initMacroTable(struct MacroTable *mTable);
 void insertMacro(struct MacroTable *mTable, struct Macro *macro);
 struct Macro *search_macro(struct MacroTable *mTable, char *name);
