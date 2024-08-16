@@ -1,9 +1,5 @@
 #include "validation.h"
 
-
-
-
-
 /* Instruction table */
 struct instruction instruction_Table[INSTRUCTION_TABLE_SIZE] = {
     {"mov", 0, "0123", "0123", 2},
@@ -24,9 +20,6 @@ struct instruction instruction_Table[INSTRUCTION_TABLE_SIZE] = {
     {"stop", 15, "", "", 0}
 };
 
-
-
-
 /* Function to find an instruction in the instruction table */
 int find_in_instruction_Table_table(char *word) {
     int i;
@@ -39,13 +32,12 @@ int find_in_instruction_Table_table(char *word) {
 }
 
 /* Function to determine the addressing method of an operand */
-/* Function to determine the addressing method of an operand */
 char *addressing_method(char *str) {
     int i = 1;
     int operand_len = strlen(str);
     if (str[0] == '#' && operand_len >= 2) { /* immediate addressing */
         skip_leading_sign(&str);
-        while(*str != ',' && *str != ' ' && *str == '\0') {
+        while (*str != ',' && *str != ' ' && *str == '\0') {
             if (!isdigit(str[i])) {
                 printf("Error: invalid immediate addressing\n");
                 return NULL;
@@ -64,10 +56,10 @@ char *addressing_method(char *str) {
         return "3";
     }
     /* Direct Addressing */
-    if(str[operand_len-1] == ','){
+    if (str[operand_len - 1] == ',') {
         operand_len--;
     }
-    if (is_alphanumeric_string(str, operand_len-1)) {
+    if (is_alphanumeric_string(str, operand_len - 1)) {
         return "1";
     }
     /* invalid addressing method */
@@ -96,7 +88,6 @@ int is_directive(char *word) {
     return false;
 }
 
-
 /* Function to check if a line is empty */
 int is_empty(const char *line) {
     while (*line != '\0') {
@@ -114,7 +105,7 @@ int is_instruction(char *word) {
 }
 
 /* Function to check if a string is alphanumeric */
- int is_alphanumeric_string(const char *str, int length) {
+int is_alphanumeric_string(const char *str, int length) {
     int i;
     for (i = 0; i < length; i++) {
         if (!isalnum(str[i])) {
@@ -149,8 +140,6 @@ int is_label(char *word) {
 
     return true;
 }
-
-
 
 /* Function to skip to the next word in a string */
 void skip_to_next_word(char **str) {
@@ -212,7 +201,6 @@ int is_valid_integer(char *str) {
     return true;
 }
 
-
 /* Function to check if a string contains valid data */
 int is_valid_data(char **str) {
     while (**str != '\0') {
@@ -234,11 +222,12 @@ int is_valid_data(char **str) {
     }
     return true;
 }
+
 /* Function to validate that a string has exactly two quotes and contains only valid characters inside the quotes */
 int validate_string(char *line) {
     int len = strlen(line);
     int i;
-    
+
     /* Check if the string starts and ends with a quote */
     if (line[0] != '"' || line[len - 2] != '"') {
         return false;
@@ -253,6 +242,7 @@ int validate_string(char *line) {
 
     return true;
 }
+
 /* Function to remove the trailing comma from a string */
 void remove_comma(char *str) {
     size_t len = strlen(str);
@@ -268,7 +258,6 @@ void remove_trailing_newline(char *str) {
         str[len - 1] = '\0';
     }
 }
-
 
 /* Function for validation */
 char *validation(char *fName) {
@@ -305,7 +294,7 @@ char *validation(char *fName) {
         }
 
         /* Copy of current_word to preserve original pointer */
-         original_current_word = current_word;
+        original_current_word = current_word;
         sscanf(Current_Line, " %s", current_word);
 
         /* for lines with labels */
@@ -451,17 +440,15 @@ char *validation(char *fName) {
                     fputs(formated_line, temp_file);
                     break;
                 case 3: /* Code for .entry directive */
-                  skip_to_next_word(&line_ptr);
-                    addres_mode = addressing_method(line_ptr);
-                    if (strcmp(addres_mode, "1") != 0) {
+                    skip_to_next_word(&original_current_word); /* Use original pointer */
+                    if (strstr(original_current_word, "1") == NULL) {
                         error_flag = 1;
                         fprintf(stdout, "Error at line %d: invalid entry code\n", line_counter);
                         continue;
                     }
-                    sprintf(formated_line, "%s %s %s", label, current_word, line_ptr);
-                    fputs(formated_line, temp_file);
-                    break;
 
+                    fputs(Current_Line, temp_file);
+                    break;
                 case 4: /* Code for .extern directive */
                     skip_to_next_word(&line_ptr);
                     addres_mode = addressing_method(line_ptr);
@@ -470,8 +457,7 @@ char *validation(char *fName) {
                         fprintf(stdout, "Error at line %d: invalid extern code\n", line_counter);
                         continue;
                     }
-                    sprintf(formated_line, "%s %s %s\n", label, current_word, line_ptr);
-                    fputs(formated_line, temp_file);
+                    fputs(Current_Line, temp_file);
                     break;
                 default:
                     error_flag = 1;
@@ -501,13 +487,14 @@ char *validation(char *fName) {
 
     /* Reordering lines */
     reorder_lines("temp.am", validateFileName);
+    remove("temp.am");
 
     /* Free allocated memory */
     free(current_word); /* Free the dynamically allocated memory for current_word */
     free(am_file_name);
     free(tempFileName);
 
-
-    printf("Validation completed successfully\n");
+    printf("Validation completed\n");
     return validateFileName;
+
 }
