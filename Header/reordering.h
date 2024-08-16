@@ -3,6 +3,6 @@
 
 #include "utils.h"
 
-void reorder_lines(const char *source_file);
+void reorder_lines(const char *source_file, char * new_name) ;
 
 #endif 

@@ -1,7 +1,7 @@
 
 #include "reordering.h"
 
-void reorder_lines(const char *source_file) {
+void reorder_lines(const char *source_file, char * new_name) {
     char output_file[MAX_LINE_LEN];
     FILE *source;
     FILE *output;
@@ -11,7 +11,7 @@ void reorder_lines(const char *source_file) {
     int data_count = 0;
     int other_count = 0;
     int i;
-    strcpy(output_file, "output.am");
+    strcpy(output_file, new_name);
 
 
     source = fopen(source_file, "r");
@@ -51,4 +51,6 @@ void reorder_lines(const char *source_file) {
 
     fclose(source);
     fclose(output);
+
+ printf("Reordering done\n"); /* Debug*/   
 }

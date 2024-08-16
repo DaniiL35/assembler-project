@@ -1,6 +1,9 @@
 #include "utils.h"
 #include "preprocessor.h"
 #include "validation.h"
+#include "firstpass.h"
+#include "secondpass.h"
+
 
 
 /* Function to check if the file exists */
@@ -23,8 +26,11 @@ int checkFile(char *fName) {
 }
 
 /* Main function */
+/* Main function */
 int main(int argc, char *argv[]) {
     int i;
+    char *validatedFileName;
+
     if (argc < 2) {
         fprintf(stderr, "Usage: %s <filename1> <filename2> ...\n", argv[0]);
         return 1;
@@ -32,16 +38,21 @@ int main(int argc, char *argv[]) {
 
     for (i = 1; i < argc; i++) {
         char *fName = argv[i];
+        
         if (checkFile(fName)) {
             preprocessor(fName);
-            validation(fName);
-        if(validation(fName) == null)
-            break;
-        firstpass(fName);
-        secondpass(fName);
-        
+            validatedFileName = validation(fName);
+
+            if (strcmp(validatedFileName, "error") != 0) {
+                printf("no errors found\n");
+                firstpass(validatedFileName);
+            } else {
+                printf("Skipping firstpass due to validation errors.\n");
+            }
         }
     }
 
+
+    /*free section*/
     return 0;
 }

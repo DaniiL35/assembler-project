@@ -8,7 +8,8 @@
         "limits": "c",
         "label_table.h": "c",
         "reordering.h": "c",
-        "algorithm": "c"
+        "algorithm": "c",
+        "utils.h": "c"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

@@ -16,8 +16,8 @@ LOOP: prn #48
 0 .entry MAIN
 0 jmp LOOP
 END: stop
+0 .extern L3 
 STR: .string "abcd"
 LIST: .data 
 0 .data 
 K: .data 
-0 .extern L3 
