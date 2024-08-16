@@ -35,6 +35,11 @@ int main(int argc, char *argv[]) {
         if (checkFile(fName)) {
             preprocessor(fName);
             validation(fName);
+        if(validation(fName) == null)
+            break;
+        firstpass(fName);
+        secondpass(fName);
+        
         }
     }
 

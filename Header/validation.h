@@ -40,7 +40,7 @@ int is_empty(const char *line);
 int is_instruction(char *word);
 int is_label(char *word);
 char *addressing_method(char *str);
-int find_in_table(char *word);
+int find_in_instruction_Table_table(char *word);
 char *validation(char *fName);
 
 #endif

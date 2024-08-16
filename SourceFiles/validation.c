@@ -28,7 +28,7 @@ struct instruction instruction_Table[INSTRUCTION_TABLE_SIZE] = {
 
 
 /* Function to find an instruction in the instruction table */
-int find_in_table(char *word) {
+int find_in_instruction_Table_table(char *word) {
     int i;
     for (i = 0; i < INSTRUCTION_TABLE_SIZE; i++) {
         if (strcmp(word, instruction_Table[i].name) == 0) {
@@ -109,7 +109,7 @@ int is_empty(const char *line) {
 
 /* Function to check if a word is an instruction */
 int is_instruction(char *word) {
-    return find_in_table(word) != -1;
+    return find_in_instruction_Table_table(word) != -1;
 }
 
 /* Function to check if a string is alphanumeric */
@@ -266,6 +266,7 @@ void remove_trailing_newline(char *str) {
 /* Function for validation */
 char *validation(char *fName) {
     int line_counter = 0;
+    int error_flag = 0;
     char Current_Line[MAX_LINE_LEN];
     char *line_ptr;
     char *addres_mode;
@@ -303,6 +304,7 @@ char *validation(char *fName) {
             skip_to_next_word(&line_ptr); /* skip the label */ 
             printf("line ptr after label: %s\n", line_ptr); /* testing only */    
         if (is_label(current_word) == -1) {
+                error_flag = 1;
                 fprintf(stdout, "Error at line %d: invalid label format\n", line_counter);
                 continue;
             }
@@ -321,9 +323,9 @@ char *validation(char *fName) {
             strcpy(instruction_temp, current_word);
             printf(" Current_Line: after strcpy: %s\n", Current_Line); /* Debugging */
             printf ("instruction_temp: %s\n", instruction_temp); /* testing only */
-            printf("number of operands: %d\n", instruction_Table[find_in_table(current_word)].
+            printf("number of operands: %d\n", instruction_Table[find_in_instruction_Table_table(current_word)].
             num_of_operands); /* testing only */
-            switch (instruction_Table[find_in_table(current_word)].num_of_operands) {
+            switch (instruction_Table[find_in_instruction_Table_table(current_word)].num_of_operands) {
                 case 0: /* Code for instructions with 0 operands */
                     printf("Processing instruction with 0 operands: %s\n", Current_Line); /* Debugging */
                     sprintf(formated_line, "%s %s\n" ,label,instruction_temp);
@@ -341,29 +343,32 @@ char *validation(char *fName) {
                     
                     /* Check if the addressing method is invalid */
                     if(addres_mode == NULL){
+                        error_flag = 1;
                         fprintf(stdout, "Error at line %d: invalid addressing method\n", line_counter);
                         continue;
 
                     }
 
                     /* Check if the source operand is empty */
-                    if (strcmp(instruction_Table[find_in_table(instruction_temp)].source, "") == 0) {
+                    if (strcmp(instruction_Table[find_in_instruction_Table_table(instruction_temp)].source, "") == 0) {
                         /* Check the destination operand */
-                        if (strstr(instruction_Table[find_in_table(instruction_temp)].dest, addres_mode) != NULL) {
+                        if (strstr(instruction_Table[find_in_instruction_Table_table(instruction_temp)].dest, addres_mode) != NULL) {
                             sprintf(formated_line, "%s %s %s\n",label,instruction_temp, first_operand);
                             printf("formated line: %s\n", formated_line); /* testing only */
                             fputs(formated_line, temp_file);
                         } else {
+                            error_flag = 1;
                             fprintf(stdout, "Error at line %d: invalid addressing method\n", line_counter);
                             continue;
 
                         }
                     } else {
                         /* Check the source operand */
-                        if (strstr(instruction_Table[find_in_table(instruction_temp)].source, addres_mode) != NULL) {
+                        if (strstr(instruction_Table[find_in_instruction_Table_table(instruction_temp)].source, addres_mode) != NULL) {
                             sprintf(formated_line, "%s %s %s\n",label,instruction_temp, first_operand);
                             fputs(Current_Line, temp_file);
                         } else {
+                            error_flag = 1;
                             fprintf(stdout, "Error at line %d: invalid addressing method\n", line_counter);
                             continue;
                             
@@ -378,20 +383,23 @@ char *validation(char *fName) {
                     printf("first operand: %s\n", first_operand); /* testing only */
                     addres_mode = addressing_method(first_operand);
                     printf("addressing mode of source: %s\n", addres_mode); /* testing only */
-                    printf("source: %s\n", instruction_Table[find_in_table(instruction_temp)].source); /* testing only */
+                    printf("source: %s\n", instruction_Table[find_in_instruction_Table_table(instruction_temp)].source); /* testing only */
                     
                     
                     /* Check if the addressing method is invalid */
                     if(addres_mode == NULL){
+                        error_flag = 1;
                         fprintf(stdout, "Error at line %d: invalid addressing method\n", line_counter);
                         continue;
                     }
 
-                    if (strstr(instruction_Table[find_in_table(instruction_temp)].source, addres_mode) == NULL) { /* check the source operand */
+                    if (strstr(instruction_Table[find_in_instruction_Table_table(instruction_temp)].source, addres_mode) == NULL) { /* check the source operand */
+                        error_flag = 1;
                         fprintf(stdout, "Error at line %d: invalid addressing method\n", line_counter);
                         continue;
                     }
                     if(first_operand[strlen(first_operand)-1] != ','){
+                        error_flag = 1;
                         fprintf(stdout, "Error at line %d: missing comma between operands \n", line_counter);
                         continue;
                     }
@@ -400,7 +408,8 @@ char *validation(char *fName) {
                     printf("2nd operand: %s\n", second_operand); /* testing only */                    
                     addres_mode = addressing_method(second_operand);
                     printf("addressing mode of dest: %s\n", addres_mode); /* testing only */
-                    if (strstr(instruction_Table[find_in_table(instruction_temp)].dest, addres_mode) == NULL) { /* check the destination operand */
+                    if (strstr(instruction_Table[find_in_instruction_Table_table(instruction_temp)].dest, addres_mode) == NULL) { /* check the destination operand */
+                        error_flag = 1;
                         fprintf(stdout, "Error at line %d: invalid addressing method\n", line_counter);
                         continue;
                     }
@@ -410,6 +419,7 @@ char *validation(char *fName) {
                     fputs(formated_line, temp_file);
                     break;
                 default:
+                    error_flag = 1;
                     printf("Error at line %d: invalid number of operands\n", line_counter);
                     continue;
             }
@@ -419,6 +429,7 @@ char *validation(char *fName) {
                     strcpy(directive_temp, current_word);
                     skip_to_next_word(&current_word);         
                     if (!is_valid_data(&current_word)) {
+                        error_flag = 1;
                         fprintf(stdout, "Error at line %d: invalid data\n", line_counter);
                         continue;
                     }
@@ -431,6 +442,7 @@ char *validation(char *fName) {
                     strcpy(first_operand, quote_ptr);
                     printf("quote_ptr: %s\n", quote_ptr); /* testing only */
                     if (!validate_string(quote_ptr)) {
+                        error_flag = 1;
                         fprintf(stdout, "Error at line %d: invalid string\n", line_counter);
                         continue;
                     }
@@ -441,6 +453,7 @@ char *validation(char *fName) {
                 case 3: /* Code for .entry directive */
                     skip_to_next_word(&current_word);
                     if (!is_label(current_word)) {
+                        error_flag = 1;
                         fprintf(stdout, "Error at line %d: invalid label format\n", line_counter);
                         continue;
                     }
@@ -449,16 +462,19 @@ char *validation(char *fName) {
                 case 4: /* Code for .extern directive */
                     skip_to_next_word(&current_word);
                     if (!is_label(current_word)) {
+                        error_flag = 1;
                         fprintf(stdout, "Error at line %d: invalid label format\n", line_counter);
                         continue;
                     }
                     fputs(Current_Line, temp_file);
                     break;
                 default:
+                    error_flag = 1;
                     fprintf(stdout, "Error at line %d: invalid directive\n", line_counter);
                     continue;
             }
         } else {
+            error_flag = 1;
             fprintf(stdout, "Error at line %d: invalid instruction or directive\n", line_counter);
             continue;
         }
@@ -467,33 +483,40 @@ char *validation(char *fName) {
     fclose(temp_file);
     fclose(am_file);
 
+    if (error_flag) {
+        remove("temp.am");
+        free(am_file_name);
+        free(tempFileName);
+        free(current_word);
+        return NULL;
+    }
 
-/* Reordering lines */
-reorder_lines("temp.am");
+    /* Reordering lines */
+    reorder_lines("temp.am");
 
-/* Copy the original file name to tempFileName */
-strcpy(tempFileName, am_file_name);
+    /* Copy the original file name to tempFileName */
+    strcpy(tempFileName, am_file_name);
 
-/* Remove the original file */
-if (remove(am_file_name) != 0) {
-    perror("Error deleting original file");
-    exit(1);
-}
+    /* Remove the original file */
+    if (remove(am_file_name) != 0) {
+        perror("Error deleting original file");
+        exit(1);
+    }
 
-/* Rename the output file to the original file name */
-if (rename("output.am", tempFileName) != 0) {
-    perror("Error renaming file");
-    exit(1);
-}
+    /* Rename the output file to the original file name */
+    if (rename("output.am", tempFileName) != 0) {
+        perror("Error renaming file");
+        exit(1);
+    }
 
-    /* Free allocated memory */
-    free(am_file_name);
-    free(tempFileName);
-    free(current_word);
+        /* Free allocated memory */
+        free(am_file_name);
+        free(tempFileName);
+        free(current_word);
 
 
-    /* Return the new file name */
-    return tempFileName;
+        /* Return the new file name */
+        return tempFileName;
 
 }
 
