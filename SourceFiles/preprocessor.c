@@ -189,7 +189,7 @@ char *preprocessor(char *fName) {
     fclose(as_file);
     fclose(am_file);
     free(as_file_name);
-    free(am_file_name);
+    
     freeMacroTable(&mTable);
 
     return am_file_name;

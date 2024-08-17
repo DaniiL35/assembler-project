@@ -40,27 +40,17 @@ int main(int argc, char *argv[]) {
 
     for (i = 1; i < argc; i++) {
         char *fName = argv[i];
-        
         if (checkFile(fName)) {
-            preprocessor(fName);
-            validatedFileName = validation(fName);
-
-            if (strcmp(validatedFileName, "error") != 0) {
-
-                /* Get the label table from firstpass */
-                labelTable = firstpass(validatedFileName, fName);
-
-                /* Pass the label table to secondpass */
-                secondpass(validatedFileName, labelTable,fName);  
-
-                /* Free the label table */
-            } else {
-                printf("Skipping firstpass due to validation errors.\n");
+            if(strcmp(preprocessor(fName), "error") == 0){
+                continue;
             }
+            validatedFileName = validation(fName);
+            if (strcmp(validatedFileName, "error") != 0) {
+            labelTable = firstpass(validatedFileName, fName);
+            secondpass(validatedFileName, labelTable, fName);
         }
+        
     }
-
+    }
     return 0;
 }
-
-

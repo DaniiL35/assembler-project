@@ -1,6 +1,6 @@
 # Compilation macros
 CC = gcc
-CFLAGS = -ansi -Wall -pedantic -g -fsanitize=address -IHeader -ISourceFiles # Include Header and SourceFiles directories for headers
+CFLAGS = -ansi -Wall -pedantic -g  -IHeader -ISourceFiles # Include Header and SourceFiles directories for headers
 GLOBAL_DEPS = Header/globals.h # Dependencies for everything
 EXE_DEPS = SourceFiles/assembler.o SourceFiles/preprocessor.o SourceFiles/validation.o SourceFiles/reordering.o SourceFiles/utils.o SourceFiles/firstpass.o SourceFiles/secondpass.o # Deps for exe
 

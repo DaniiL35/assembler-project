@@ -108,7 +108,7 @@ int is_instruction(char *word) {
 int is_alphanumeric_string(const char *str, int length) {
     int i;
     for (i = 0; i < length; i++) {
-        if (!isalnum(str[i])) {
+        if (!isalnum(str[i]) && str[i] != ' ') {
             return false;
         }
     }
@@ -276,9 +276,10 @@ char *validation(char *fName) {
     char *validateFileName = strcatWithMalloc(fName, "_validate.am");
     char *current_word = (char *)malloc(MAX_LINE_LEN * sizeof(char));
     char *am_file_name = strcatWithMalloc(fName, AM_FILE_EXT);
+    char *tempFileName = malloc(strlen(am_file_name) + 1);
     FILE *am_file = openFileAndCheck(am_file_name, "r");
     FILE *temp_file = openFileAndCheck("temp.am", "w");
-    char *tempFileName = malloc(strlen(am_file_name) + 1);
+
     printf("Reading started\n"); /* testing only */
 
     /* reading line by line from the am file */
@@ -429,6 +430,8 @@ char *validation(char *fName) {
                     break;
                 case 4: /* Code for .extern directive */
                     skip_to_next_word(&line_ptr);
+                    printf("line_ptr: %s\n", line_ptr);
+                    printf("addressing_method: %s\n", addressing_method(line_ptr));
                     if (strstr(addressing_method(line_ptr), "1") == NULL) {
                         error_flag = 1;
                         fprintf(stdout, "Error at line %d: invalid extern code\n", line_counter);
@@ -461,7 +464,7 @@ char *validation(char *fName) {
         free(am_file_name);
         free(tempFileName);
         free(validateFileName);
-        free(current_word); 
+        free(current_word); /* Free the dynamically allocated memory for current_word */
         printf("Error found in validation \n");
         return "error";
     }
