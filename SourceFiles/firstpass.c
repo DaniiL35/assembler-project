@@ -94,20 +94,27 @@ LabelDefResult label_def(char *line_buffer, struct Label **currentLabel, struct 
     printf("label = %s, command = %s, op1 = %s, op2 = %s\n", label, command, op1, op2); /* Debugging */
 
     result.type = ic;
-    result.number = -1;
+    result.number = 0;
+    
 
 
     /* label definition */
     if (strcmp(label, "0") != 0) {
         newLabel = (struct Label *)malloc(sizeof(struct Label));
         if (newLabel == NULL) {
-            exit(EXIT_FAILURE);
+            fprintf(stdout, "Memory allocation failed\n");
         }
         /* check if the label already exists */
         if (search_label(lTable, label) != NULL) {
+            
             free(newLabel);
         } else {
+            
             /* create a new label */
+            size_t len = strlen(label);
+            if (label[len - 1] == ':') {
+                label[len - 1] = '\0';
+            }
             strcpy(newLabel->name, label);
             if (strcmp(command, ".data") == 0 || strcmp(command, ".string") == 0) {
                 newLabel->address = ic+dc;
@@ -115,8 +122,8 @@ LabelDefResult label_def(char *line_buffer, struct Label **currentLabel, struct 
                 line_ptr = skipToDataOrString(line_ptr);
                 result.number = dc_calc(line_ptr);
             } else if (strcmp(command, ".entry") == 0 || strcmp(command, ".extern") == 0) {
-                newLabel->is_entry = 1;
-            } else {
+                /*do nothing */
+            }else {
                 newLabel->address = ic;
                 result.type = com;
                 result.number = command_calc(op1,op2); 
@@ -130,14 +137,36 @@ LabelDefResult label_def(char *line_buffer, struct Label **currentLabel, struct 
         }
 
     }
+    /* no label definition */
     else {
         if (strcmp(command, ".data") == 0 || strcmp(command, ".string") == 0) {
                 result.type = dat;
                 line_ptr = skipToDataOrString(line_ptr);
                 result.number = dc_calc(line_ptr);
         } else if (strcmp(command, ".entry") == 0 || strcmp(command, ".extern") == 0) {
-            result.type = com;
-            result.number = 0;
+            if(strcmp(command, ".entry") == 0){
+                newLabel = search_label(lTable, op1);
+                if(newLabel != NULL){
+                    newLabel->is_entry = 1;
+                }
+            }
+            else{
+                newLabel = search_label(lTable, op1);
+                if(newLabel == NULL){
+                    newLabel = (struct Label *)malloc(sizeof(struct Label));
+                    if (newLabel == NULL) {
+                        fprintf(stdout, "Memory allocation failed\n");
+                    }
+                    strcpy(newLabel->name, op1);
+                    newLabel->address = 0;
+                    newLabel->is_extern = 1;
+                    newLabel->is_entry = 0;
+                    newLabel->next = NULL;
+                    insertLabel(lTable, newLabel);
+                    lTable->count++;
+                }
+
+            }
         } else {
             result.type = com;
             result.number = command_calc(op1,op2); 
@@ -145,6 +174,19 @@ LabelDefResult label_def(char *line_buffer, struct Label **currentLabel, struct 
     }
 
     return result;
+}
+void printEntryLabels(struct labelTable *lTable) {
+    struct Label *label = NULL;
+    int i;
+    for ( i = 0; i < TABLE_SIZE; i++) {
+        label = lTable->table[i];
+        while (label != NULL) {
+            if (label->is_entry == 1) {
+                printf("Entry label: %s\n", label->name);
+            }
+            label = label->next;
+        }
+    }
 }
 
 /* Function to preprocess the as file */
@@ -179,13 +221,18 @@ struct labelTable *firstpass(char *Vname, char *fName) {
             dc += line_type.number;
         }
         line++;
+
+
     }
+
 
     /* write the first line of the ob file */
     printf("First pass completed\n"); /* Debugging */
     printf("ic = %d, dc = %d\n", ic, dc); /* Debugging */
     sprintf(top_line, "\t%d %d\n", ic-100, dc);
     fputs(top_line, ob_file);
+
+
 
     /* free and close part */
     free(ob_file_name);

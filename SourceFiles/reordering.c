@@ -1,18 +1,22 @@
-
 #include "reordering.h"
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
 
-void reorder_lines(const char *source_file, char * new_name) {
+void reorder_lines(const char *source_file, char *new_name) {
     char output_file[MAX_LINE_LEN];
     FILE *source;
     FILE *output;
     char line[MAX_LINE_LEN];
     char **data_lines = NULL;
     char **other_lines = NULL;
+    char **entry_extern_lines = NULL;
     int data_count = 0;
     int other_count = 0;
+    int entry_extern_count = 0;
     int i;
-    strcpy(output_file, new_name);
 
+    strcpy(output_file, new_name);
 
     source = fopen(source_file, "r");
     output = fopen(output_file, "w");
@@ -29,6 +33,11 @@ void reorder_lines(const char *source_file, char * new_name) {
             data_lines[data_count] = malloc(strlen(line) + 1); /* Allocate memory */
             strcpy(data_lines[data_count], line); /* Copy the line */
             data_count++;
+        } else if (strstr(line, ".entry") != NULL || strstr(line, ".extern") != NULL) {
+            entry_extern_lines = realloc(entry_extern_lines, (entry_extern_count + 1) * sizeof(char *));
+            entry_extern_lines[entry_extern_count] = malloc(strlen(line) + 1); /* Allocate memory */
+            strcpy(entry_extern_lines[entry_extern_count], line); /* Copy the line */
+            entry_extern_count++;
         } else {
             other_lines = realloc(other_lines, (other_count + 1) * sizeof(char *));
             other_lines[other_count] = malloc(strlen(line) + 1); /* Allocate memory */
@@ -37,6 +46,7 @@ void reorder_lines(const char *source_file, char * new_name) {
         }
     }
 
+    /* Write lines to the output file in the required order */
     for (i = 0; i < other_count; i++) {
         fputs(other_lines[i], output);
         free(other_lines[i]);
@@ -49,8 +59,14 @@ void reorder_lines(const char *source_file, char * new_name) {
     }
     free(data_lines);
 
+    for (i = 0; i < entry_extern_count; i++) {
+        fputs(entry_extern_lines[i], output);
+        free(entry_extern_lines[i]);
+    }
+    free(entry_extern_lines);
+
     fclose(source);
     fclose(output);
 
- printf("Reordering done\n"); /* Debug*/   
+    printf("Reordering done\n"); /* Debug */
 }
