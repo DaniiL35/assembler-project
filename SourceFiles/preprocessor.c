@@ -178,6 +178,11 @@ char *preprocessor(char *fName) {
                     fputs(Current_Line, am_file); /* write the line to the am file without changing anything */
                 }
                 break;
+            case -1: /* error */
+                return "error";
+                break;
+                
+                
         }
     }
 

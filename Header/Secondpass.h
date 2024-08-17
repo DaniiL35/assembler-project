@@ -8,6 +8,6 @@
 
 
 /* Function declaration for secondpass */
-int * secondpass(char *validatedFileName, struct labelTable *labelTable, char *originalFileName);
+int* secondpass(char *validatedFileName, struct labelTable *labelTable, char *originalFileName) ;
 
 #endif

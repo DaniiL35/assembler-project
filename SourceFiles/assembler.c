@@ -46,13 +46,12 @@ int main(int argc, char *argv[]) {
             validatedFileName = validation(fName);
 
             if (strcmp(validatedFileName, "error") != 0) {
-                printf("no errors found\n");
 
                 /* Get the label table from firstpass */
-                labelTable = firstpass(validatedFileName,fName);
+                labelTable = firstpass(validatedFileName, fName);
 
                 /* Pass the label table to secondpass */
-                secondpass(validatedFileName, labelTable,fName); 
+                secondpass(validatedFileName, labelTable,fName);  
 
                 /* Free the label table */
             } else {

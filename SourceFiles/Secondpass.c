@@ -4,23 +4,7 @@
 
 #define BINARY_STR_LEN 16 /* 15 bits + 1 for null terminator */
 
-/* Function to check if any label is an entry */
-void checkEntryLabels(struct labelTable *labelTable, FILE *ent_file) {
-    int i;
-    struct label *current_label;
 
-    printf("Checking for entry labels...\n");
-    
-    for (i = 0; i < TABLE_SIZE; i++) {
-        current_label = labelTable->table[i];
-        while (current_label != NULL) {
-            if (current_label->is_entry == 1) {
-                printf("Label '%s' is an entry label at address %d\n", current_label->label_Name, current_label->address);
-            }
-            current_label = current_label->next;
-        }
-    }
-}
 
 
 /* Function to convert binary string to unsigned int */
@@ -213,7 +197,7 @@ int* secondpass(char *validatedFileName, struct labelTable *labelTable, char *or
     }
 
     /* write to ent */
-    checkEntryLabels(labelTable,ent_file);
+    /*checkEntryLabels(labelTable,ent_file); */
     /* write to ext */
     fputs("extern", ext_file);
 

@@ -63,7 +63,7 @@ char *addressing_method(char *str) {
         return "1";
     }
     /* invalid addressing method */
-    return NULL;
+    return "-4";
 }
 
 /* Function to check if a string is a valid register */
@@ -293,11 +293,9 @@ char *validation(char *fName) {
 
         sscanf(line_ptr, " %s", current_word); /* get the first word in the line */
         /* for lines with labels */
-        printf("label to check: %s\n", current_word); /* Debugging */
         if (is_label(current_word)) {
             strcpy(label, current_word);
             skip_to_next_word(&line_ptr); /* skip the label */
-            printf("line ptr after label: %s\n", line_ptr); /* testing only */
         } else {
             /* if the line doesn't have a label */
             strcpy(label, "0");
@@ -307,27 +305,19 @@ char *validation(char *fName) {
         /* check if the word is an instruction */
         sscanf(line_ptr, " %s", current_word);
         if (is_instruction(current_word)) {
-            printf("instruction found: %s\n", current_word); /* testing only */
-            printf("Initial Current_Line: %s\n", Current_Line); /* Debugging */
-            strcpy(instruction_temp, current_word);
-            printf(" Current_Line: after strcpy: %s\n", Current_Line); /* Debugging */
-            printf("instruction_temp: %s\n", instruction_temp); /* testing only */
-            printf("number of operands: %d\n", instruction_Table[find_in_instruction_Table_table(current_word)].
-                   num_of_operands); /* testing only */
+            strcpy(instruction_temp, current_word); /* save the instruction */
+
+            /* Check if the instruction has the correct number of operands */
             switch (instruction_Table[find_in_instruction_Table_table(current_word)].num_of_operands) {
                 case 0: /* Code for instructions with 0 operands */
-                    printf("Processing instruction with 0 operands: %s\n", Current_Line); /* Debugging */
                     sprintf(formated_line, "%s %s\n", label, instruction_temp);
-                    printf("Formatted line: %s\n", formated_line);
                     fputs(formated_line, temp_file);
                     break;
                 case 1: /* Code for instructions with 1 operand */
                     /* prep */
                     skip_to_next_word(&line_ptr);
                     sscanf(line_ptr, " %s", current_word);
-                    printf("current word: %s\n", current_word); /* testing only */
                     addres_mode = addressing_method(current_word);
-                    printf("addressing mode: %s\n", addres_mode); /* testing only */
                     strcpy(first_operand, current_word);
 
                     /* Check if the addressing method is invalid */
@@ -341,8 +331,7 @@ char *validation(char *fName) {
                     if (strcmp(instruction_Table[find_in_instruction_Table_table(instruction_temp)].source, "") == 0) {
                         /* Check the destination operand */
                         if (strstr(instruction_Table[find_in_instruction_Table_table(instruction_temp)].dest, addres_mode) != NULL) {
-                            sprintf(formated_line, "%s %s %s %s\n", label, instruction_temp, first_operand, "dest");
-                            printf("formated line: %s\n", formated_line); /* testing only */
+                            sprintf(formated_line, "%s %s %s\n", label, instruction_temp, first_operand);
                             fputs(formated_line, temp_file);
                         } else {
                             error_flag = 1;
@@ -352,7 +341,7 @@ char *validation(char *fName) {
                     } else {
                         /* Check the source operand */
                         if (strstr(instruction_Table[find_in_instruction_Table_table(instruction_temp)].source, addres_mode) != NULL) {
-                            sprintf(formated_line, "%s %s %s %s\n", label, instruction_temp, first_operand, "source");
+                            sprintf(formated_line, "%s %s %s\n", label, instruction_temp, first_operand);
                             fputs(Current_Line, temp_file);
                         } else {
                             error_flag = 1;
@@ -364,12 +353,8 @@ char *validation(char *fName) {
                 case 2: /* Code for instructions with 2 operands */
                     /* prep */
                     skip_to_next_word(&line_ptr);
-                    printf("line_ptr: %s\n", line_ptr); /* testing only */
                     sscanf(line_ptr, " %s", first_operand);
-                    printf("first operand: %s\n", first_operand); /* testing only */
                     addres_mode = addressing_method(first_operand);
-                    printf("addressing mode of source: %s\n", addres_mode); /* testing only */
-                    printf("source: %s\n", instruction_Table[find_in_instruction_Table_table(instruction_temp)].source); /* testing only */
 
                     /* Check if the addressing method is invalid */
                     if (addres_mode == NULL) {
@@ -390,15 +375,12 @@ char *validation(char *fName) {
                     }
                     skip_to_the_next_operand(&line_ptr);
                     sscanf(line_ptr, " %s", second_operand);
-                    printf("2nd operand: %s\n", second_operand); /* testing only */
                     addres_mode = addressing_method(second_operand);
-                    printf("addressing mode of dest: %s\n", addres_mode); /* testing only */
                     if (strstr(instruction_Table[find_in_instruction_Table_table(instruction_temp)].dest, addres_mode) == NULL) { /* check the destination operand */
                         error_flag = 1;
                         fprintf(stdout, "Error at line %d: invalid addressing method\n", line_counter);
                         continue;
                     }
-                    printf("checked both operands\n"); /* testing only */
                     remove_comma(first_operand);
                     sprintf(formated_line, "%s %s %s %s\n", label, instruction_temp, first_operand, second_operand);
                     fputs(formated_line, temp_file);
@@ -414,8 +396,6 @@ char *validation(char *fName) {
                     strcpy(directive_temp, current_word);
                     skip_to_next_word(&line_ptr); /* Use original pointer */
                     strcpy(first_operand, line_ptr);
-                    printf("first operand in data: %s\n", first_operand); /* testing only */
-                    printf("line_ptr in .data: %s\n", line_ptr); /* testing only */
                     if (is_valid_data(&line_ptr)) {
                         error_flag = 1;
                         fprintf(stdout, "Error at line %d: invalid data\n", line_counter);
@@ -470,7 +450,6 @@ char *validation(char *fName) {
             fprintf(stdout, "Error at line %d: invalid instruction or directive\n", line_counter);
             continue;
         }
-        printf("finished validate line %d\n", line_counter); /* testing only */
         line_counter++;
     }
 
@@ -478,21 +457,21 @@ char *validation(char *fName) {
     fclose(am_file);
 
     if (error_flag) {
-        /*remove("temp.am"); */
+        remove("temp.am"); 
         free(am_file_name);
         free(tempFileName);
         free(validateFileName);
-        free(current_word); /* Free the dynamically allocated memory for current_word */
+        free(current_word); 
         printf("Error found in validation \n");
         return "error";
     }
 
     /* Reordering lines */
     reorder_lines("temp.am", validateFileName);
-    /*remove("temp.am"); */
+    remove("temp.am"); 
 
     /* Free allocated memory */
-    free(current_word); /* Free the dynamically allocated memory for current_word */
+    free(current_word); 
     free(am_file_name);
     free(tempFileName);
 
