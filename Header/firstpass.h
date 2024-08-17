@@ -19,6 +19,7 @@ struct label {
 
 struct labelTable {
     struct label *table[TABLE_SIZE];
+    int count;
 };
 
 /* Declare function prototypes */
@@ -38,7 +39,7 @@ int dc_calculate(char *command, char *operand1, char *operand2);
 
 int has_label(char *label);
 
-struct labelTable *firstpass(char *fName) ;
+struct labelTable *firstpass(char *vName, char *fName);
 
 
 #endif /* FIRSTPASS_H */

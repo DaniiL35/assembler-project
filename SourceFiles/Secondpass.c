@@ -1,7 +1,27 @@
 #include "secondpass.h"
 #include "math.h"
+#include "firstpass.h"
 
 #define BINARY_STR_LEN 16 /* 15 bits + 1 for null terminator */
+
+/* Function to check if any label is an entry */
+void checkEntryLabels(struct labelTable *labelTable, FILE *ent_file) {
+    int i;
+    struct label *current_label;
+
+    printf("Checking for entry labels...\n");
+    
+    for (i = 0; i < TABLE_SIZE; i++) {
+        current_label = labelTable->table[i];
+        while (current_label != NULL) {
+            if (current_label->is_entry == 1) {
+                printf("Label '%s' is an entry label at address %d\n", current_label->label_Name, current_label->address);
+            }
+            current_label = current_label->next;
+        }
+    }
+}
+
 
 /* Function to convert binary string to unsigned int */
 int binaryToOctal(const char *binary) {
@@ -103,6 +123,14 @@ void assemble_instruction(int opcode, int src_addressing, int dest_addressing, i
     int_to_binary_str(instruction, binary_instruction, 15); /* 15-bit binary instruction */
 }
 
+void check_label_table(struct labelTable *labelTable) {
+    if (labelTable->count == 0) {
+        printf("Label table is empty.\n");
+    } else {
+        printf("Label table has %d labels.\n", labelTable->count);
+    }
+}
+
 /* Implementation of secondpass */
 int* secondpass(char *validatedFileName, struct labelTable *labelTable, char *originalFileName) {
     FILE *input_file, *ob_file, *ent_file, *ext_file;
@@ -125,16 +153,21 @@ int* secondpass(char *validatedFileName, struct labelTable *labelTable, char *or
     char *src;
     char *dest;
 
+    
+    /* Check if labelTable is empty */
+    check_label_table(labelTable);
+
     /* open and handle files */
     ob_file_name = strcatWithMalloc(originalFileName, ".ob");
     ent_file_name = strcatWithMalloc(originalFileName, ".ent");
     ext_file_name = strcatWithMalloc(originalFileName, ".ext");
     input_file = openFileAndCheck(validatedFileName, "r");
-    ob_file = openFileAndCheck(ob_file_name, "w");
+    ob_file = openFileAndCheck(ob_file_name, "a");
     ent_file = openFileAndCheck(ent_file_name, "w");
     ext_file = openFileAndCheck(ext_file_name, "w");
 
     /* Second pass processing */
+    printf("Second pass started\n");
     while (fgets(Current_Line, MAX_LINE_LEN, input_file) != NULL) {
         /* reset line */
         label[0] = '0';
@@ -153,7 +186,7 @@ int* secondpass(char *validatedFileName, struct labelTable *labelTable, char *or
         assemble_instruction(opcode, src_addressing, dest_addressing, are_bits, binary_instruction);
 
         /* Write the binary string to the output file */
-        sprintf(formatted_output, "%d%d %d", prefix, ic, (binary_instruction));
+        sprintf(formatted_output, "%d%d %d", prefix, ic, binaryToOctal(binary_instruction));
         fputs(formatted_output, ob_file);
         fputs("\n", ob_file);  /* Newline for each instruction */
         ic++;
@@ -180,10 +213,17 @@ int* secondpass(char *validatedFileName, struct labelTable *labelTable, char *or
     }
 
     /* write to ent */
-    fputs("entry", ent_file);
-
+    checkEntryLabels(labelTable,ent_file);
     /* write to ext */
     fputs("extern", ext_file);
+
+    /*free seciton*/
+    free(ob_file_name);
+    free(ent_file_name);
+    free(ext_file_name);
+    free(labelTable);
+    
+
 
     /* Close the files */
     fclose(input_file);

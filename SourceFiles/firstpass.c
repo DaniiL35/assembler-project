@@ -1,13 +1,13 @@
 #include "firstpass.h"
 #include "validation.h"
 
-
 /* Initialize the hash table */
 void initlabelTable(struct labelTable *labelTable) {
     int i;
     for (i = 0; i < TABLE_SIZE; i++) {
         labelTable->table[i] = NULL;
     }
+    labelTable->count = 0; 
 }
 
 /* Insert a label into the hash table */
@@ -27,20 +27,18 @@ struct label *search_label(struct labelTable *labelTable, char *name) {
     return label;
 }
 
-/* ic calculate */
+/* Calculate IC */
 int ic_calculate(char *command, char *operand1, char *operand2) {
     int ic = 0;
-
 
     if (strcmp(command, "mov") == 0 || strcmp(command, "cmp") == 0 || 
         strcmp(command, "add") == 0 || strcmp(command, "sub") == 0 || 
         strcmp(command, "lea") == 0) {
-            /* Check if the operands are of the same addressing method */
-            if (strcmp(addressing_method(operand1), addressing_method(operand2)) == 0) {
-                ic = 2;
-            } else {
-                ic = 3;
-            }
+        if (strcmp(addressing_method(operand1), addressing_method(operand2)) == 0) {
+            ic = 2;
+        } else {
+            ic = 3;
+        }
     } else if (strcmp(command, "clr") == 0 || strcmp(command, "not") == 0 || 
                strcmp(command, "inc") == 0 || strcmp(command, "dec") == 0 || 
                strcmp(command, "jmp") == 0 || strcmp(command, "bne") == 0 || 
@@ -54,7 +52,6 @@ int ic_calculate(char *command, char *operand1, char *operand2) {
     return ic;
 }
 
-
 /* Function to count numbers in a string */
 int count_numbers(char *str) {
     int count = 0;
@@ -62,15 +59,12 @@ int count_numbers(char *str) {
     int len = strlen(str);
 
     while (i < len) {
-        /* Skip leading non-digit characters */
         while (i < len && !isdigit(str[i]) && str[i] != '-' && str[i] != '+') {
             i++;
         }
 
-        /* Check if we have found a number */
         if (i < len && (isdigit(str[i]) || ((str[i] == '-' || str[i] == '+') && i + 1 < len && isdigit(str[i + 1])))) {
             count++;
-            /* Skip the rest of the number */
             if (str[i] == '-' || str[i] == '+') {
                 i++;
             }
@@ -90,15 +84,12 @@ int count_letters(char *str) {
     int len = strlen(str);
 
     while (i < len) {
-        /* Skip leading non-alphabetic characters */
         while (i < len && !isalpha(str[i])) {
             i++;
         }
 
-        /* Check if we have found an alphabetic sequence */
         if (i < len && isalpha(str[i])) {
             count++;
-            /* Skip the rest of the alphabetic sequence */
             while (i < len && isalpha(str[i])) {
                 i++;
             }
@@ -108,115 +99,130 @@ int count_letters(char *str) {
     return count;
 }
 
-/* calculate DC */
+/* Calculate DC */
 int dc_calculate(char *command, char *operand1, char *operand2) {
     int dc = 0;
     if (strcmp(command, ".data") == 0) {
-        dc = 1+count_numbers(operand1);
+        dc = 1 + count_numbers(operand1);
     } else if (strcmp(command, ".string") == 0) {
-        printf("operand1 in .data = %s\n", operand1); /* debug */
-        dc = 1+count_letters(operand1);
+        dc = 1 + count_letters(operand1);
     }
-    printf("adding %d to dc\n", dc); /* debug */
     return dc;
 }
 
-/* has label */
+/* Check if label exists */
 int has_label(char *label) {
-    if (strcmp(label, "0") != 0) {
-        return true;
-    }
-    return false;
+    return strcmp(label, "0") != 0;
 }
 
-struct labelTable *firstpass(char *fName) {
+/* First pass function */
+struct labelTable *firstpass(char *vName, char *fName) {
     int ic = 100;
     int dc = 0;
     char Current_Line[MAX_LINE_LEN];
     int line_num = 0;
-    struct labelTable *lTable = (struct labelTable *)malloc(sizeof(struct labelTable));
+    struct labelTable *lTable;
     char label[WORD_LEN];
     char command[WORD_LEN];
     char operand1[WORD_LEN];
     char operand2[WORD_LEN];
     int label_flag = 0;
-
+    char *ob_file_name;
+    char first_line[50];
+    FILE *ob_file;
     FILE *output_file;
-    output_file = openFileAndCheck(fName, "r");
+
+    lTable = (struct labelTable *)malloc(sizeof(struct labelTable));
+    if (lTable == NULL) {
+        fprintf(stderr, "Error: Memory allocation for label table failed\n");
+        return NULL;
+    }
+
+    ob_file_name = strcatWithMalloc(fName, ".ob");
+    output_file = openFileAndCheck(vName, "r");
+    ob_file = openFileAndCheck(ob_file_name, "w");
+
+    if (ob_file == NULL || output_file == NULL) {
+        free(lTable);
+        return NULL;
+    }
 
     initlabelTable(lTable);
 
-    /* firstpass started */
     printf("First pass started\n");
     while (fgets(Current_Line, MAX_LINE_LEN, output_file) != NULL) {
-        /* reset line */
+        struct label *current_label;
+        struct label *new_label;
+
         label[0] = '\0';
         command[0] = '\0';
         operand1[0] = '\0';
         operand2[0] = '\0';
         label_flag = 0;
         sscanf(Current_Line, "%s %s %s %s", label, command, operand1, operand2);
-        printf("reading line = %s\n", Current_Line); /* debug */
+
         if (strcmp(operand2, "dest") == 0 || strcmp(operand2, "source") == 0) {
             operand2[0] = '\0';
         }
 
-        /* check label flag */
-        if (has_label(label)){
-            printf("label found\n %s\n", label);
+        if (has_label(label)) {
             label_flag = 1;
         }
-        /*data type command*/
-        if (strcmp(command, ".data") == 0 || strcmp(command, ".string") == 0) {
 
-            /* check if command is .data or .string */
-            if ((strcmp(command, ".data") == 0 || strcmp(command, ".string") == 0) && label_flag == 1) {
-                /* check if the label is in the label table */
-                struct label *current_label = search_label(lTable, label);
+        if (strcmp(command, ".data") == 0 || strcmp(command, ".string") == 0) {
+            if (label_flag == 1) {
+                current_label = search_label(lTable, label);
                 if (current_label != NULL && current_label->is_extern == 0) {
                     fprintf(stdout, "Error: label already exists\n");
                 } else {
-                    /* insert label into label table */
-                    struct label *new_label = (struct label *)malloc(sizeof(struct label));
+                    new_label = (struct label *)malloc(sizeof(struct label));
+                    if (new_label == NULL) {
+                        fprintf(stderr, "Error: Memory allocation for label failed\n");
+                        continue;
+                    }
                     strcpy(new_label->label_Name, label);
                     new_label->address = dc;
                     new_label->is_extern = 0;
                     new_label->is_entry = 0;
+                    lTable->count++;
                     insertLabel(lTable, new_label);
-                    printf("label dc address = %d\n", dc); /* debug */
                 }
             }
-            printf("operand1 in .data: %s\n", operand1); /* debug */
             dc += dc_calculate(command, operand1, operand2);
             line_num++;
             continue;
         }
 
-        /* Handle .extern or .entry command */
         if (strcmp(command, ".extern") == 0 || strcmp(command, ".entry") == 0) {
+            current_label = search_label(lTable, operand1);
 
-            struct label *current_label = search_label(lTable, operand1);
-
-            /* Handle .extern command */
             if (strcmp(command, ".extern") == 0) {
                 if (current_label != NULL) {
                     fprintf(stdout, "Error: Label already defined in this file; cannot be defined as extern.\n");
                 } else {
-                    struct label *new_label = (struct label *)malloc(sizeof(struct label));
+                    new_label = (struct label *)malloc(sizeof(struct label));
+                    if (new_label == NULL) {
+                        fprintf(stderr, "Error: Memory allocation for label failed\n");
+                        continue;
+                    }
                     strcpy(new_label->label_Name, operand1);
                     new_label->address = dc;
                     new_label->is_extern = 1;
                     new_label->is_entry = 0;
+                    lTable->count++;
                     insertLabel(lTable, new_label);
                 }
             }
 
-            /* Handle .entry command */
             if (strcmp(command, ".entry") == 0) {
                 if (current_label != NULL && current_label->is_extern == 0) {
                     current_label->is_entry = 1;
                 } else {
-                    struct label *new_label = (struct label *)malloc(sizeof(struct label));
+                    new_label = (struct label *)malloc(sizeof(struct label));
+                    if (new_label == NULL) {
+                        fprintf(stderr, "Error: Memory allocation for label failed\n");
+                        continue;
+                    }
                     strcpy(new_label->label_Name, operand1);
                     new_label->is_extern = 0;
                     new_label->is_entry = 1;
@@ -226,32 +232,32 @@ struct labelTable *firstpass(char *fName) {
             line_num++;
             continue;
         }
-        /*handale instacion commands*/
-        if(label_flag == 1){
-            struct label *current_label = search_label(lTable, label);
+
+        if (label_flag == 1) {
+            current_label = search_label(lTable, label);
             if (current_label != NULL && current_label->is_extern == 0) {
                 fprintf(stdout, "Error: label already exists\n");
             } else {
-                struct label *new_label = (struct label *)malloc(sizeof(struct label));
+                new_label = (struct label *)malloc(sizeof(struct label));
+                if (new_label == NULL) {
+                    fprintf(stderr, "Error: Memory allocation for label failed\n");
+                    continue;
+                }
                 strcpy(new_label->label_Name, label);
                 new_label->address = ic;
                 new_label->is_extern = 0;
                 new_label->is_entry = 0;
+                lTable->count++;
                 insertLabel(lTable, new_label);
-                printf("label IC address = %d\n", ic); /* debug */
             }
         }
         ic += ic_calculate(command, operand1, operand2);
         line_num++;
-        continue;
     }
-    printf("ic = %d\n", ic); /* debug */
-    printf("dc = %d\n", dc); /* debug */
-    printf("line %d\n", line_num); /* debug */
-    printf("First pass ended\n");
-
-    /* loop end */
+    sprintf(first_line, "\t%d %d\n", ic, dc);
+    fputs(first_line, ob_file);
 
     fclose(output_file);
+    fclose(ob_file);
     return lTable;
 }
