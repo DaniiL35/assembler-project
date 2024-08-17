@@ -1,6 +1,7 @@
 #include "firstpass.h"
 #include "validation.h"
 
+
 /* Initialize the hash table */
 void initlabelTable(struct labelTable *labelTable) {
     int i;
@@ -36,7 +37,6 @@ int ic_calculate(char *command, char *operand1, char *operand2) {
         strcmp(command, "lea") == 0) {
             /* Check if the operands are of the same addressing method */
             if (strcmp(addressing_method(operand1), addressing_method(operand2)) == 0) {
-                printf("operands are of the same addressing method\n"); /* debug */
                 ic = 2;
             } else {
                 ic = 3;
@@ -50,13 +50,6 @@ int ic_calculate(char *command, char *operand1, char *operand2) {
     } else if (strcmp(command, "rts") == 0 || strcmp(command, "stop") == 0) {
         ic = 1;
     }
-
-    /* Check if the operands are of the same addressing method */
-    printf("operand1 = %s\n", operand1); /* debug */
-    printf("operand1 addressing method = %s\n", addressing_method(operand1)); /* debug */
-    printf("operand2 = %s\n", operand2); /* debug */
-    printf("operand2 addressing method = %s\n", addressing_method(operand2)); /* debug */
-    
 
     return ic;
 }
@@ -124,6 +117,7 @@ int dc_calculate(char *command, char *operand1, char *operand2) {
         printf("operand1 in .data = %s\n", operand1); /* debug */
         dc = 1+count_letters(operand1);
     }
+    printf("adding %d to dc\n", dc); /* debug */
     return dc;
 }
 
@@ -135,13 +129,12 @@ int has_label(char *label) {
     return false;
 }
 
-void * firstpass(char *fName) {
+struct labelTable *firstpass(char *fName) {
     int ic = 100;
     int dc = 0;
     char Current_Line[MAX_LINE_LEN];
     int line_num = 0;
-    char *line_ptr;
-    struct labelTable lTable;
+    struct labelTable *lTable = (struct labelTable *)malloc(sizeof(struct labelTable));
     char label[WORD_LEN];
     char command[WORD_LEN];
     char operand1[WORD_LEN];
@@ -149,14 +142,9 @@ void * firstpass(char *fName) {
     int label_flag = 0;
 
     FILE *output_file;
-    FILE *mav_file;
-    mav_file = openFileAndCheck("mav_file", "w");
     output_file = openFileAndCheck(fName, "r");
 
-    initlabelTable(&lTable);
-
-
-
+    initlabelTable(lTable);
 
     /* firstpass started */
     printf("First pass started\n");
@@ -167,7 +155,11 @@ void * firstpass(char *fName) {
         operand1[0] = '\0';
         operand2[0] = '\0';
         label_flag = 0;
-        sscanf(Current_Line, "%s %s %s %s", label, command, operand1, operand2);  
+        sscanf(Current_Line, "%s %s %s %s", label, command, operand1, operand2);
+        printf("reading line = %s\n", Current_Line); /* debug */
+        if (strcmp(operand2, "dest") == 0 || strcmp(operand2, "source") == 0) {
+            operand2[0] = '\0';
+        }
 
         /* check label flag */
         if (has_label(label)){
@@ -180,7 +172,7 @@ void * firstpass(char *fName) {
             /* check if command is .data or .string */
             if ((strcmp(command, ".data") == 0 || strcmp(command, ".string") == 0) && label_flag == 1) {
                 /* check if the label is in the label table */
-                struct label *current_label = search_label(&lTable, label);
+                struct label *current_label = search_label(lTable, label);
                 if (current_label != NULL && current_label->is_extern == 0) {
                     fprintf(stdout, "Error: label already exists\n");
                 } else {
@@ -190,10 +182,11 @@ void * firstpass(char *fName) {
                     new_label->address = dc;
                     new_label->is_extern = 0;
                     new_label->is_entry = 0;
-                    insertLabel(&lTable, new_label);
+                    insertLabel(lTable, new_label);
                     printf("label dc address = %d\n", dc); /* debug */
                 }
             }
+            printf("operand1 in .data: %s\n", operand1); /* debug */
             dc += dc_calculate(command, operand1, operand2);
             line_num++;
             continue;
@@ -202,7 +195,7 @@ void * firstpass(char *fName) {
         /* Handle .extern or .entry command */
         if (strcmp(command, ".extern") == 0 || strcmp(command, ".entry") == 0) {
 
-            struct label *current_label = search_label(&lTable, operand1);
+            struct label *current_label = search_label(lTable, operand1);
 
             /* Handle .extern command */
             if (strcmp(command, ".extern") == 0) {
@@ -214,7 +207,7 @@ void * firstpass(char *fName) {
                     new_label->address = dc;
                     new_label->is_extern = 1;
                     new_label->is_entry = 0;
-                    insertLabel(&lTable, new_label);
+                    insertLabel(lTable, new_label);
                 }
             }
 
@@ -227,7 +220,7 @@ void * firstpass(char *fName) {
                     strcpy(new_label->label_Name, operand1);
                     new_label->is_extern = 0;
                     new_label->is_entry = 1;
-                    insertLabel(&lTable, new_label);
+                    insertLabel(lTable, new_label);
                 }
             }
             line_num++;
@@ -235,7 +228,7 @@ void * firstpass(char *fName) {
         }
         /*handale instacion commands*/
         if(label_flag == 1){
-            struct label *current_label = search_label(&lTable, label);
+            struct label *current_label = search_label(lTable, label);
             if (current_label != NULL && current_label->is_extern == 0) {
                 fprintf(stdout, "Error: label already exists\n");
             } else {
@@ -244,15 +237,13 @@ void * firstpass(char *fName) {
                 new_label->address = ic;
                 new_label->is_extern = 0;
                 new_label->is_entry = 0;
-                insertLabel(&lTable, new_label);
+                insertLabel(lTable, new_label);
                 printf("label IC address = %d\n", ic); /* debug */
             }
         }
         ic += ic_calculate(command, operand1, operand2);
         line_num++;
         continue;
-
-
     }
     printf("ic = %d\n", ic); /* debug */
     printf("dc = %d\n", dc); /* debug */
@@ -262,6 +253,5 @@ void * firstpass(char *fName) {
     /* loop end */
 
     fclose(output_file);
-    fclose(mav_file);
-    return 0;
+    return lTable;
 }

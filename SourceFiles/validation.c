@@ -341,7 +341,7 @@ char *validation(char *fName) {
                     if (strcmp(instruction_Table[find_in_instruction_Table_table(instruction_temp)].source, "") == 0) {
                         /* Check the destination operand */
                         if (strstr(instruction_Table[find_in_instruction_Table_table(instruction_temp)].dest, addres_mode) != NULL) {
-                            sprintf(formated_line, "%s %s %s\n", label, instruction_temp, first_operand);
+                            sprintf(formated_line, "%s %s %s %s\n", label, instruction_temp, first_operand, "dest");
                             printf("formated line: %s\n", formated_line); /* testing only */
                             fputs(formated_line, temp_file);
                         } else {
@@ -352,7 +352,7 @@ char *validation(char *fName) {
                     } else {
                         /* Check the source operand */
                         if (strstr(instruction_Table[find_in_instruction_Table_table(instruction_temp)].source, addres_mode) != NULL) {
-                            sprintf(formated_line, "%s %s %s\n", label, instruction_temp, first_operand);
+                            sprintf(formated_line, "%s %s %s %s\n", label, instruction_temp, first_operand, "source");
                             fputs(Current_Line, temp_file);
                         } else {
                             error_flag = 1;

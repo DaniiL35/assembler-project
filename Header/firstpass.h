@@ -38,7 +38,7 @@ int dc_calculate(char *command, char *operand1, char *operand2);
 
 int has_label(char *label);
 
-void * firstpass(char *fName); 
+struct labelTable *firstpass(char *fName) ;
 
 
 #endif /* FIRSTPASS_H */

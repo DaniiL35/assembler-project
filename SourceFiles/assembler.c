@@ -27,9 +27,11 @@ int checkFile(char *fName) {
 
 /* Main function */
 /* Main function */
+/* Main function */
 int main(int argc, char *argv[]) {
     int i;
     char *validatedFileName;
+    struct labelTable *labelTable;
 
     if (argc < 2) {
         fprintf(stderr, "Usage: %s <filename1> <filename2> ...\n", argv[0]);
@@ -45,14 +47,21 @@ int main(int argc, char *argv[]) {
 
             if (strcmp(validatedFileName, "error") != 0) {
                 printf("no errors found\n");
-                firstpass(validatedFileName);
+
+                /* Get the label table from firstpass */
+                labelTable = firstpass(validatedFileName);
+
+                /* Pass the label table to secondpass */
+                secondpass(validatedFileName, labelTable,fName);
+
+                /* Free the label table */
             } else {
                 printf("Skipping firstpass due to validation errors.\n");
             }
         }
     }
 
-
-    /*free section*/
     return 0;
 }
+
+
