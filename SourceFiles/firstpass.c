@@ -195,6 +195,7 @@ void * firstpass(char *fName) {
                 }
             }
             dc += dc_calculate(command, operand1, operand2);
+            line_num++;
             continue;
         }
 
@@ -229,6 +230,7 @@ void * firstpass(char *fName) {
                     insertLabel(&lTable, new_label);
                 }
             }
+            line_num++;
             continue;
         }
         /*handale instacion commands*/

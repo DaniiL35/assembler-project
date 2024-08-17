@@ -273,7 +273,6 @@ char *validation(char *fName) {
     char second_operand[MAX_LINE_LEN];
     char directive_temp[10];
     char formated_line[9000];
-    char *original_current_word;
     char *validateFileName = strcatWithMalloc(fName, "_validate.am");
     char *current_word = (char *)malloc(MAX_LINE_LEN * sizeof(char));
     char *am_file_name = strcatWithMalloc(fName, AM_FILE_EXT);
@@ -286,18 +285,15 @@ char *validation(char *fName) {
     while (fgets(Current_Line, MAX_LINE_LEN, am_file) != 0) {
         line_ptr = Current_Line; /* set the pointer to the beginning of the line */
         printf("Current line: %s\n", Current_Line); /* testing only */
-        line_counter++; /* increment the line counter */
 
         /* skip empty lines and comments */
         if (is_empty(Current_Line) || Current_Line[0] == ';') {
             continue;
         }
 
-        /* Copy of current_word to preserve original pointer */
-        original_current_word = current_word;
-        sscanf(Current_Line, " %s", current_word);
-
+        sscanf(line_ptr, " %s", current_word); /* get the first word in the line */
         /* for lines with labels */
+        printf("label to check: %s\n", current_word); /* Debugging */
         if (is_label(current_word)) {
             strcpy(label, current_word);
             skip_to_next_word(&line_ptr); /* skip the label */
@@ -416,20 +412,22 @@ char *validation(char *fName) {
             switch (is_directive(current_word)) {
                 case 1: /* Code for .data directive */
                     strcpy(directive_temp, current_word);
-                    skip_to_next_word(&original_current_word); /* Use original pointer */
-                    if (!is_valid_data(&original_current_word)) {
+                    skip_to_next_word(&line_ptr); /* Use original pointer */
+                    strcpy(first_operand, line_ptr);
+                    printf("first operand in data: %s\n", first_operand); /* testing only */
+                    printf("line_ptr in .data: %s\n", line_ptr); /* testing only */
+                    if (is_valid_data(&line_ptr)) {
                         error_flag = 1;
                         fprintf(stdout, "Error at line %d: invalid data\n", line_counter);
                         continue;
                     }
-                    sprintf(formated_line, "%s %s %s\n", label, directive_temp, original_current_word);
+                    sprintf(formated_line, "%s %s %s", label, directive_temp, first_operand);
                     fputs(formated_line, temp_file);
                     break;
                 case 2: /* Code for .string directive */
                     strcpy(directive_temp, current_word);
                     quote_ptr = strchr(line_ptr, '\"');
                     strcpy(first_operand, quote_ptr);
-                    printf("quote_ptr: %s\n", quote_ptr); /* testing only */
                     if (!validate_string(quote_ptr)) {
                         error_flag = 1;
                         fprintf(stdout, "Error at line %d: invalid string\n", line_counter);
@@ -440,24 +438,27 @@ char *validation(char *fName) {
                     fputs(formated_line, temp_file);
                     break;
                 case 3: /* Code for .entry directive */
-                    skip_to_next_word(&original_current_word); /* Use original pointer */
-                    if (strstr(original_current_word, "1") == NULL) {
+                    skip_to_next_word(&line_ptr); /* Use original pointer */
+                    if (strstr(addressing_method(line_ptr), "1") == NULL) {
                         error_flag = 1;
                         fprintf(stdout, "Error at line %d: invalid entry code\n", line_counter);
                         continue;
                     }
-
-                    fputs(Current_Line, temp_file);
+                    sprintf(formated_line, "%s %s %s", label, current_word, line_ptr);
+                    fputs(formated_line, temp_file);
                     break;
                 case 4: /* Code for .extern directive */
                     skip_to_next_word(&line_ptr);
-                    addres_mode = addressing_method(line_ptr);
-                    if (strcmp(addres_mode, "1") != 0) {
+                    if (strstr(addressing_method(line_ptr), "1") == NULL) {
                         error_flag = 1;
                         fprintf(stdout, "Error at line %d: invalid extern code\n", line_counter);
                         continue;
                     }
-                    fputs(Current_Line, temp_file);
+                    if(line_ptr[strlen(line_ptr) - 1] == '\n') {
+                        line_ptr[strlen(line_ptr) - 1] = '\0';
+                    }
+                    sprintf(formated_line, "%s %s %s\n", label, current_word, line_ptr);
+                    fputs(formated_line, temp_file);
                     break;
                 default:
                     error_flag = 1;
@@ -470,13 +471,14 @@ char *validation(char *fName) {
             continue;
         }
         printf("finished validate line %d\n", line_counter); /* testing only */
+        line_counter++;
     }
 
     fclose(temp_file);
     fclose(am_file);
 
     if (error_flag) {
-        remove("temp.am");
+        /*remove("temp.am"); */
         free(am_file_name);
         free(tempFileName);
         free(validateFileName);
@@ -487,7 +489,7 @@ char *validation(char *fName) {
 
     /* Reordering lines */
     reorder_lines("temp.am", validateFileName);
-    remove("temp.am");
+    /*remove("temp.am"); */
 
     /* Free allocated memory */
     free(current_word); /* Free the dynamically allocated memory for current_word */
@@ -496,5 +498,4 @@ char *validation(char *fName) {
 
     printf("Validation completed\n");
     return validateFileName;
-
 }
