@@ -10,19 +10,7 @@ void initLabelTable(struct labelTable *lTable) {
         lTable->table[i] = NULL;
     }
 }
-/* Helper function to print all label names and addresses */
-void printLabels(struct labelTable *lTable) {
-    int i;
-    printf("Label Table:\n");
-    for ( i = 0; i < TABLE_SIZE; i++) {
-        struct Label *label = lTable->table[i];
-        while (label != NULL) {
-            printf("Name: %s, Address: %d\n", label->name, label->address);
-            printf("is_extern: %d\n", label->is_extern);
-            label = label->next;
-        }
-    }
-}
+
 
 
 /* Insert a label into the hash table */
@@ -82,7 +70,6 @@ int dc_calc(char *line) {
             count++;
             token = strtok(NULL, ",");
         }
-        printf("in row %s there are %d numbers\n", line, count); /* Debugging */
         return count;
     }
 
@@ -104,7 +91,6 @@ LabelDefResult label_def(char *line_buffer, struct Label **currentLabel, struct 
 
 
     sscanf(p1, " %s %s %s %s", label, command, op1, op2); 
-    printf("label = %s, command = %s, op1 = %s, op2 = %s\n", label, command, op1, op2); /* Debugging */
 
     result.type = ic;
     result.number = 0;
@@ -213,7 +199,6 @@ struct labelTable *firstpass(char *Vname, char *fName) {
 
     while (fgets(Current_Line, MAX_LINE_LEN, output_file) != NULL) { 
         line_type = label_def(Current_Line, &currentLabel, lTable, ic, dc);
-        printf("reading line %s\n", Current_Line); /* Debugging */
 
 
         if(line_type.type == com){
@@ -230,11 +215,8 @@ struct labelTable *firstpass(char *Vname, char *fName) {
     }
     
 
-    printLabels(lTable); /* Debugging */
 
     /* write the first line of the ob file */
-    printf("First pass completed\n"); /* Debugging */
-    printf("ic = %d, dc = %d\n", ic, dc); /* Debugging */
     sprintf(top_line, "\t%d %d\n", ic-100, dc);
     fputs(top_line, ob_file);
 
@@ -244,7 +226,6 @@ struct labelTable *firstpass(char *Vname, char *fName) {
     fclose(ob_file);
     fclose(output_file); /* Close the input file as well */
 
-    printLabels(lTable); /* Debugging */
 
     return lTable;
 }

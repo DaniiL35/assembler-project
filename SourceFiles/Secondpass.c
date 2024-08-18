@@ -296,7 +296,6 @@ int commandToBinary(char *line, struct labelTable *labelTable, FILE *ob_file,FIL
     /* print to ob file */
     combined = combineBitField(bf);
     toBinaryString(combined, binaryString, 15);
-    printf("first row: %s\n", binaryString); /* Debugging */
     sprintf(formated_ob, "%04d %s", IC, binary_to_octal(binaryString));
     fputs(formated_ob, ob_file);
     fputs("\n", ob_file);
@@ -344,7 +343,6 @@ return count;
         }
         combined = combineLabelBitField(lbf);
         toBinaryString(combined, binaryString, 15);
-        printf("2nd row %s\n", binaryString); /* Debugging */
         sprintf(formated_ob, "%04d %s", IC, binary_to_octal(binaryString));
         fputs(formated_ob, ob_file);
         fputs("\n", ob_file);
@@ -357,7 +355,6 @@ return count;
             lbf.are = 4;
             combined = combineLabelBitField(lbf);
             toBinaryString(combined, binaryString, 15);
-            printf("2nd row %s\n", binaryString); /* Debugging */
             sprintf(formated_ob, "%04d %s", IC, binary_to_octal(binaryString));
             fputs(formated_ob, ob_file);
             fputs("\n", ob_file);
@@ -369,7 +366,6 @@ return count;
         combined = combineRegBitField(rbf);
         toBinaryString(combined, binaryString, 15);
         sprintf(formated_ob, "%04d %s", IC, binary_to_octal(binaryString));
-        printf("2nd row %s\n", binaryString); /* Debugging */
         fputs(formated_ob, ob_file);
         fputs("\n", ob_file);
 }
@@ -414,7 +410,6 @@ if ((strcmp(addressing_method(op1), "2") == 0 || strcmp(addressing_method(op1), 
             combined = combineLabelBitField(lbf);
             toBinaryString(combined, binaryString1, 15);
             sprintf(formated_ob, "%04d %s", IC, binary_to_octal(binaryString1));
-            printf("2nd row %s\n", binaryString1); /* Debugging */
             fputs(formated_ob, ob_file);
             fputs("\n", ob_file);
        }else if(addressing_method(op1) == 0){
@@ -422,7 +417,6 @@ if ((strcmp(addressing_method(op1), "2") == 0 || strcmp(addressing_method(op1), 
             lbf.are = 4;
             combined = combineLabelBitField(lbf);
             toBinaryString(combined, binaryString1, 15);
-            printf("2nd row %s\n", binaryString1); /* Debugging */
             sprintf(formated_ob, "%04d %s", IC, binary_to_octal(binaryString1));
             fputs(formated_ob, ob_file);
             fputs("\n", ob_file);
@@ -433,7 +427,6 @@ if ((strcmp(addressing_method(op1), "2") == 0 || strcmp(addressing_method(op1), 
             rbf1.are = 4;
             combined = combineRegBitField(rbf1);
             toBinaryString(combined, binaryString1, 15);
-            printf("2nd row %s\n", binaryString1); /* Debugging */
             sprintf(formated_ob, "%04d %s", IC, binary_to_octal(binaryString1));
             fputs(formated_ob, ob_file);
             fputs("\n", ob_file);
@@ -451,7 +444,6 @@ if ((strcmp(addressing_method(op1), "2") == 0 || strcmp(addressing_method(op1), 
         }
         combined = combineLabelBitField(lbf);
         toBinaryString(combined, binaryString2, 15);
-        printf("3nd row %s\n", binaryString2); /* Debugging */
         sprintf(formated_ob, "%04d %s", IC+1, binary_to_octal(binaryString2));
         fputs(formated_ob, ob_file);
         fputs("\n", ob_file);
@@ -461,7 +453,6 @@ if ((strcmp(addressing_method(op1), "2") == 0 || strcmp(addressing_method(op1), 
         lbf.are = 4;
         combined = combineLabelBitField(lbf);
         toBinaryString(combined, binaryString2, 15);
-        printf("3nd row %s\n", binaryString2); /* Debugging */
         sprintf(formated_ob, "%04d %s", IC+1, binary_to_octal(binaryString2));
         fputs(formated_ob, ob_file);
         fputs("\n", ob_file);
@@ -473,7 +464,6 @@ if ((strcmp(addressing_method(op1), "2") == 0 || strcmp(addressing_method(op1), 
         combined = combineRegBitField(rbf1);
         printf("rbf1.dest: %d\n", rbf1.dest);
         toBinaryString(combined, binaryString2, 15);
-        printf("3nd row %s\n", binaryString2); /* Debugging */
         sprintf(formated_ob, "%04d %s", IC+1, binary_to_octal(binaryString2));
         fputs(formated_ob, ob_file);
         fputs("\n", ob_file);
@@ -514,7 +504,6 @@ int* secondpass(char *validatedFileName, struct labelTable *labelTable, char *or
             continue; 
         }
     /* codding the command line and print to the .ob*/
-        printf("Current_Line: %s\n", Current_Line); /* Debugging */
     IC += commandToBinary(Current_Line, labelTable, ob_file, ext_file, IC);
     printf("IC: %d\n", IC);
     

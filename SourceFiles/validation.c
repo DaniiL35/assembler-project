@@ -280,12 +280,10 @@ char *validation(char *fName) {
     FILE *am_file = openFileAndCheck(am_file_name, "r");
     FILE *temp_file = openFileAndCheck("temp.am", "w");
 
-    printf("Reading started\n"); /* testing only */
 
     /* reading line by line from the am file */
     while (fgets(Current_Line, MAX_LINE_LEN, am_file) != 0) {
         line_ptr = Current_Line; /* set the pointer to the beginning of the line */
-        printf("Current line: %s\n", Current_Line); /* testing only */
 
         /* skip empty lines and comments */
         if (is_empty(Current_Line) || Current_Line[0] == ';') {

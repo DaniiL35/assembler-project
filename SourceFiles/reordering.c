@@ -68,5 +68,4 @@ void reorder_lines(const char *source_file, char *new_name) {
     fclose(source);
     fclose(output);
 
-    printf("Reordering done\n"); /* Debug */
 }
