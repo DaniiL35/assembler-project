@@ -11,6 +11,18 @@ void initLabelTable(struct labelTable *lTable) {
         lTable->table[i] = NULL;
     }
 }
+/* Helper function to print all label names and addresses */
+void printLabels(struct labelTable *lTable) {
+    int i;
+    printf("Label Table:\n");
+    for ( i = 0; i < TABLE_SIZE; i++) {
+        struct Label *label = lTable->table[i];
+        while (label != NULL) {
+            printf("Name: %s, Address: %d\n", label->name, label->address);
+            label = label->next;
+        }
+    }
+}
 
 
 /* Insert a label into the hash table */
@@ -211,9 +223,10 @@ struct labelTable *firstpass(char *Vname, char *fName) {
         }
         line++;
 
-
     }
+    
 
+    printLabels(lTable); /* Debugging */
 
     /* write the first line of the ob file */
     printf("First pass completed\n"); /* Debugging */

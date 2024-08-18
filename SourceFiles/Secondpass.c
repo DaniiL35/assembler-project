@@ -1,8 +1,38 @@
 #include "secondpass.h"
 #include "math.h"
 #include "firstpass.h"
+#include "validation.h"
 
-#define BINARY_STR_LEN 16 /* 15 bits + 1 for null terminator */
+
+#include <stdio.h>
+
+/* Function to convert a 15-bit binary string to its octal representation */
+char* binary_to_octal(const char* binary_str) {
+    /* Declare variables at the start */
+    static char octal_str[6];  /* Array to hold the resulting octal string (5 octal digits + null terminator) */
+    int i, j;
+    int binary_group;
+
+    /* Initialize the index for the octal string */
+    j = 0;
+
+    /* Iterate over the binary string in groups of 3 bits */
+    for (i = 0; i < 15; i += 3) {
+        /* Convert each group of 3 binary digits to an integer (octal digit) */
+        binary_group = (binary_str[i] - '0') * 4 + 
+                       (binary_str[i+1] - '0') * 2 + 
+                       (binary_str[i+2] - '0');
+        
+        /* Convert the integer to the corresponding octal digit */
+        octal_str[j++] = binary_group + '0';
+    }
+    
+    /* Null-terminate the octal string */
+    octal_str[j] = '\0';
+
+    return octal_str;
+}
+
 
 /* print label to entry file */
 void printLabelToEntry(struct labelTable *lTable, FILE *ent_file) {
@@ -45,139 +75,316 @@ void printLabelToExtern(struct labelTable *lTable, FILE *ext_file,char *operand1
 
 }
 
-/* Function to convert binary string to unsigned int */
-int binaryToOctal(const char *binary) {
-    int octal = 0;
-    int length = strlen(binary);
-    int i, j;
-    int temp;
 
-    /* Convert binary to decimal */
-    int decimal = 0;
-    for (i = 0; i < length; i++) {
-        if (binary[i] == '1') {
-            decimal = (decimal << 1) | 1;
-        } else if (binary[i] == '0') {
-            decimal = decimal << 1;
+int extract_number(char* str) {
+    int sign = 1;
+    int num = 0;
+    int found_number = 0;
+
+    /* Iterate through the string */
+    while (*str != '\0') {
+        /* Check for a negative sign */
+        if (*str == '-' && !found_number) {
+            sign = -1;
         }
+
+        /* If it's a digit, start converting it to an integer */
+        if (isdigit(*str)) {
+            num = num * 10 + (*str - '0');
+            found_number = 1;
+        } else if (found_number) {
+            /* If the number is found and a non-digit is encountered, stop */
+            break;
+        }
+
+        str++;
     }
 
-    /* Convert decimal to octal */
-    i = 1;
-    while (decimal != 0) {
-        temp = decimal % 8;
-        octal += temp * i;
-        decimal /= 8;
-        i *= 10;
-    }
-
-    return octal;
+    /* Return the number with the correct sign */
+    return sign * num;
 }
 
-void int_to_binary_str(int n, char *binaryStr, int bits) {
-    int index = 0;
+
+
+/* get opcode from command*/
+int getOpcode(char *command) {
+    return instruction_Table[find_in_instruction_Table_table(command)].opcode;
+
+}
+
+int get_adressing(char *operand) {
+    if (strstr(operand, "#")) { /* Immediate addressing */
+        return 1;
+    } else if (strstr(operand, "*r")) { /* Register addressing */
+        return 4;
+    } else if (strstr(operand, "r")) { /* Indirect addressing */
+        return 8;
+    } else { /* Direct addressing */
+        return 2;
+    }
+}
+
+/* get ARE from command */ /* need to work on logic */
+int get_ARE(char *operand) {
+    return 1;
+
+}
+
+unsigned int combineBitField(BitField bf) {
+    return (bf.opcode << 11) | (bf.src << 7) | (bf.dest << 3) | bf.are;
+}
+
+unsigned int combineRegBitField(reg_bitField op_bf) {
+    return (op_bf.free << 9) | (op_bf.src << 6) | (op_bf.dest << 3) | op_bf.are;
+}
+
+unsigned int combineLabelBitField(label_bitField op_bf) {
+    return (op_bf.dest << 3) | op_bf.are;
+}
+
+void toBinaryString(unsigned int num, char *str, int length) {
     int i;
-    for (i = bits - 1; i >= 0; i--) {
-        int bit = (n >> i) & 1;
-        binaryStr[index++] = bit ? '1' : '0';
+    str[length] = '\0';
+    for (i = length - 1; i >= 0; i--) {
+        str[i] = (num & 1) ? '1' : '0';
+        num >>= 1;
     }
-    binaryStr[index] = '\0';  /* Null-terminate the string */
 }
 
-char* extractRegisterNumber(const char *operand) {
-    static char binaryStr[4];  /* 3 bits + 1 for null terminator */
-    int regNum;
-    if (operand[0] == 'R' || operand[0] == 'r') {
-        regNum = atoi(operand + 1);  /* Convert the number part to an integer */
-        if (regNum >= 0 && regNum <= 7) {
-            int_to_binary_str(regNum, binaryStr, 3);  /* Convert register number to binary string */
-            return binaryStr;  /* Return the binary string */
+int number_of_operands(char * cmd){
+return instruction_Table[find_in_instruction_Table_table(cmd)].num_of_operands;
+}
+
+/* Function to convert a command to binary */
+int commandToBinary(char *line, struct labelTable *labelTable, FILE *ob_file, int IC) {
+    char label[MAX_LINE_LEN], command[MAX_LINE_LEN], operand1[MAX_LINE_LEN], operand2[MAX_LINE_LEN];
+    BitField bf = {0}; 
+    unsigned int combined;
+    char binaryString[16]; 
+    char formated_ob[MAX_LINE_LEN];
+    int num = 0;
+    int count = 0;
+    sscanf(line, "%s %s %s %s", label, command, operand1, operand2);
+    num = number_of_operands(command);
+
+    switch (num) {
+        case 0: /* for codes withot operands*/
+            bf.opcode = getOpcode(command);
+            bf.src = 0;
+            bf.dest = 0;
+            bf.are = 4;
+            break;
+        case 1: /* for codes with one operand */
+            bf.opcode = getOpcode(command);
+            bf.src = 0;
+            bf.dest = get_adressing(operand1);
+            bf.are = 4;
+            break;
+        case 2: /* for codes with two operands */
+            bf.opcode = getOpcode(command);
+            bf.src = get_adressing(operand1);
+            bf.dest = get_adressing(operand2);
+            bf.are = 4;
+            break;
+        case 3: /* for .data or .string*/
+        default:
+            /* handle error */
+            break;
+    }
+    /* print to ob file */
+    combined = combineBitField(bf);
+    toBinaryString(combined, binaryString, 15);
+    printf("first row: %s\n", binaryString); /* Debugging */
+    sprintf(formated_ob, "%04d %s", IC, binary_to_octal(binaryString));
+    fputs(formated_ob, ob_file);
+    fputs("\n", ob_file);
+    count++;
+
+    /* process ops */
+        switch (num) {
+        case 0: /* for codes withot operands*/
+            break;
+        case 1: /* for codes with one operand */
+            opToBinary(operand1, labelTable, ob_file, IC+1);
+            count++;
+            break;
+        case 2: /* for codes with two operands */
+            count += opToBinaryDouble(operand1, operand2, labelTable, ob_file, IC+1);
+            break;
+        case 3: /* for .data or .string*/
+        default:
+            /* handle error */
+            break;
+    }
+
+
+
+
+return count;
+}
+
+    void opToBinary(char *op, struct labelTable *labelTable, FILE *ob_file, int IC) {
+    reg_bitField rbf = {0};
+    label_bitField lbf = {0};
+    unsigned int combined;
+    char binaryString[16];
+    char formated_ob[MAX_LINE_LEN];
+    struct Label *label = NULL;
+
+    if (search_label(labelTable, op) != NULL) {
+        label = search_label(labelTable, op);
+        if( label->is_extern == 1){
+            lbf.dest = 0;
+            lbf.are = 1;
+        }else{
+            lbf.dest = label->address;
+            lbf.are = 2;
+        }
+        combined = combineLabelBitField(lbf);
+        toBinaryString(combined, binaryString, 15);
+        printf("2nd row %s\n", binaryString); /* Debugging */
+        sprintf(formated_ob, "%04d %s", IC, binary_to_octal(binaryString));
+        fputs(formated_ob, ob_file);
+        fputs("\n", ob_file);
+    }else if(get_adressing(op) == 1){
+            printf("operand: %s\n", op);
+            lbf.dest = extract_number(op);
+            printf("lbf.dest: %d\n", lbf.dest);
+            lbf.are = 4;
+            combined = combineLabelBitField(lbf);
+            toBinaryString(combined, binaryString, 15);
+            printf("2nd row %s\n", binaryString); /* Debugging */
+            sprintf(formated_ob, "%04d %s", IC, binary_to_octal(binaryString));
+            fputs(formated_ob, ob_file);
+            fputs("\n", ob_file);
+    } else {
+        rbf.free = 0;
+        rbf.src = 0;
+        rbf.dest = extract_number(op);
+        rbf.are = 4;
+        combined = combineRegBitField(rbf);
+        toBinaryString(combined, binaryString, 15);
+        sprintf(formated_ob, "%04d %s", IC, binary_to_octal(binaryString));
+        printf("2nd row %s\n", binaryString); /* Debugging */
+        fputs(formated_ob, ob_file);
+        fputs("\n", ob_file);
+}
+}
+int opToBinaryDouble(char *op1, char *op2, struct labelTable *labelTable, FILE *ob_file, int IC) {
+    reg_bitField rbf1 = {0};
+    label_bitField lbf = {0};
+    unsigned int combined;
+    char binaryString1[16];
+    char binaryString2[16];
+    char formated_ob[MAX_LINE_LEN];
+    struct Label *label = NULL;
+
+    /* if both ops are registers */
+    if (strstr(addressing_method(op1), "23") != NULL && strstr(addressing_method(op2), "23") != NULL){
+        rbf1.free = 0;
+        rbf1.src = extract_number(op1);
+        rbf1.dest = extract_number(op2);
+        rbf1.are = 4;
+        combined = combineRegBitField(rbf1);
+        toBinaryString(combined, binaryString1, 15);
+        sprintf(formated_ob, "%04d %s", IC, binary_to_octal(binaryString1));
+        fputs(formated_ob, ob_file);
+        fputs("\n", ob_file);
+        return 1;
+    } else{     /* ops are mixed */
+        /* process op1*/
+        if (search_label(labelTable, op1) != NULL) {
+            label = search_label(labelTable, op1);
+            if( label->is_extern == 1){
+            lbf.dest = 0;
+            lbf.are = 1;
+        }else{
+            lbf.dest = label->address;
+            lbf.are = 2;
+        }
+            combined = combineLabelBitField(lbf);
+            toBinaryString(combined, binaryString1, 15);
+            sprintf(formated_ob, "%04d %s", IC, binary_to_octal(binaryString1));
+            printf("2nd row %s\n", binaryString1); /* Debugging */
+            fputs(formated_ob, ob_file);
+            fputs("\n", ob_file);
+       }else if(addressing_method(op1) == 0){
+            lbf.dest = extract_number(op1);
+            lbf.are = 4;
+            combined = combineLabelBitField(lbf);
+            toBinaryString(combined, binaryString1, 15);
+            printf("2nd row %s\n", binaryString1); /* Debugging */
+            sprintf(formated_ob, "%04d %s", IC, binary_to_octal(binaryString1));
+            fputs(formated_ob, ob_file);
+            fputs("\n", ob_file);
+        } else {
+            rbf1.free = 0;
+            rbf1.src = extract_number(op1);
+            rbf1.dest = 0;
+            rbf1.are = 4;
+            combined = combineRegBitField(rbf1);
+            toBinaryString(combined, binaryString1, 15);
+            printf("2nd row %s\n", binaryString1); /* Debugging */
+            sprintf(formated_ob, "%04d %s", IC, binary_to_octal(binaryString1));
+            fputs(formated_ob, ob_file);
+            fputs("\n", ob_file);
         }
     }
-    return NULL;  /* Error */
-}
-
-/* Maps instruction name to its opcode */
-int get_opcode(char *command) {
-    if (strcmp(command, "mov") == 0) return 0;
-    if (strcmp(command, "cmp") == 0) return 1;
-    if (strcmp(command, "add") == 0) return 2;
-    if (strcmp(command, "sub") == 0) return 3;
-    if (strcmp(command, "lea") == 0) return 4;
-    if (strcmp(command, "clr") == 0) return 5;
-    if (strcmp(command, "not") == 0) return 6;
-    if (strcmp(command, "inc") == 0) return 7;
-    if (strcmp(command, "dec") == 0) return 8;
-    if (strcmp(command, "jmp") == 0) return 9;
-    if (strcmp(command, "bne") == 0) return 10;
-    if (strcmp(command, "red") == 0) return 11;
-    if (strcmp(command, "prn") == 0) return 12;
-    if (strcmp(command, "jsr") == 0) return 13;
-    if (strcmp(command, "rts") == 0) return 14;
-    if (strcmp(command, "stop") == 0) return 15;
-    return -1;  /* Error or unknown command */
-}
-
-/* Maps operand to its addressing mode (just an example) */
-int get_addressing_method(char *operand) {
-    if (operand[0] == '#') return 0;       /* Immediate */
-    if (operand[0] == '*') return 2;       /* Indirect */
-    if (operand[0] == 'r') return 3;       /* Register direct */
-    return 1;                              /* Direct */
-}
-
-/* Maps ARE (absolute, relocatable, external) */
-int get_are_bits() {
-    return 0;  /* Assuming absolute for simplicity */
-}
-
-/* Assembles the instruction into a binary string */
-void assemble_instruction(int opcode, int src_addressing, int dest_addressing, int ARE, char *binary_instruction) {
-    int instruction = 0;
-
-    /* Shift and combine parts into the instruction */
-    instruction |= (opcode & 0xF) << 11;              /* Opcode: 4 bits, shift to bits 11-14 */
-    instruction |= (src_addressing & 0xF) << 7;       /* Source Addressing: 4 bits, shift to bits 7-10 */
-    instruction |= (dest_addressing & 0xF) << 3;      /* Destination Addressing: 4 bits, shift to bits 3-6 */
-    instruction |= (ARE & 0x7);                       /* ARE: 3 bits, in bits 0-2 */
-
-    /* Convert the integer instruction to a binary string */
-    int_to_binary_str(instruction, binary_instruction, 15); /* 15-bit binary instruction */
-}
-
-void check_label_table(struct labelTable *labelTable) {
-    if (labelTable->count == 0) {
-        printf("Label table is empty.\n");
+    /* process op2*/
+    if (search_label(labelTable, op2) != NULL) {
+        label = search_label(labelTable, op2);
+        if( label->is_extern == 1){
+            lbf.dest = 0;
+            lbf.are = 1;
+        }else{
+            lbf.dest = label->address;
+            lbf.are = 2;
+        }
+        combined = combineLabelBitField(lbf);
+        toBinaryString(combined, binaryString2, 15);
+        printf("3nd row %s\n", binaryString2); /* Debugging */
+        sprintf(formated_ob, "%04d %s", IC+1, binary_to_octal(binaryString2));
+        fputs(formated_ob, ob_file);
+        fputs("\n", ob_file);
+    } else if(addressing_method(op2) == 0){
+        lbf.dest = extract_number(op2);
+        lbf.are = 2;
+        combined = combineLabelBitField(lbf);
+        toBinaryString(combined, binaryString2, 15);
+        printf("3nd row %s\n", binaryString2); /* Debugging */
+        sprintf(formated_ob, "%04d %s", IC+1, binary_to_octal(binaryString2));
+        fputs(formated_ob, ob_file);
+        fputs("\n", ob_file);
     } else {
-        printf("Label table has %d labels.\n", labelTable->count);
+        rbf1.free = 0;
+        rbf1.src = 0;
+        rbf1.dest = extract_number(op2);
+        rbf1.are = 4;
+        combined = combineRegBitField(rbf1);
+        toBinaryString(combined, binaryString2, 15);
+        printf("3nd row %s\n", binaryString2); /* Debugging */
+        sprintf(formated_ob, "%04d %s", IC+1, binary_to_octal(binaryString2));
+        fputs(formated_ob, ob_file);
+        fputs("\n", ob_file);
     }
-}
+    return 2;
+    }
+
+
+
+
 
 /* Implementation of secondpass */
 int* secondpass(char *validatedFileName, struct labelTable *labelTable, char *originalFileName) {
     FILE *input_file, *ob_file, *ent_file, *ext_file;
     char Current_Line[MAX_LINE_LEN];
-    char label[WORD_LEN];
-    char command[WORD_LEN];
-    char operand1[WORD_LEN];
-    char operand2[WORD_LEN];
     char *ob_file_name;  /* Output file name */
     char *ent_file_name;    /* Entry file name */
     char *ext_file_name;    /* External file name */
-    char binary_instruction[16];  /* 15 bits + 1 for null terminator */
-    char formatted_output[MAX_LINE_LEN];
-    int opcode;
-    int src_addressing;
-    int dest_addressing;
-    int are_bits;
-    int prefix = 0;
-    int ic = 100;
-    char *src;
-    char *dest;
+    int IC = 100; /* Instruction Counter */
 
     
-    /* Check if labelTable is empty */
-    check_label_table(labelTable);
+
 
     /* open and handle files */
     ob_file_name = strcatWithMalloc(originalFileName, ".ob");
@@ -191,56 +398,17 @@ int* secondpass(char *validatedFileName, struct labelTable *labelTable, char *or
     /* Second pass processing */
     printf("Second pass started\n");
     while (fgets(Current_Line, MAX_LINE_LEN, input_file) != NULL) {
-        /* reset line */
-        label[0] = '0';
-        command[0] = '0';
-        operand1[0] = '0';
-        operand2[0] = '0';
-        
-
-        sscanf(Current_Line, "%s %s %s %s", label, command, operand1, operand2);
-        
-
-
-        
-        opcode = get_opcode(command);
-        src_addressing = get_addressing_method(operand1);
-        dest_addressing = get_addressing_method(operand2);
-        are_bits = get_are_bits();
-
-        
-
-        /* Assemble the instruction into a binary string */
-        assemble_instruction(opcode, src_addressing, dest_addressing, are_bits, binary_instruction);
-
-        /* Write the binary string to the output file */
-        sprintf(formatted_output, "%d%d %d", prefix, ic, binaryToOctal(binary_instruction));
-        fputs(formatted_output, ob_file);
-        fputs("\n", ob_file);  /* Newline for each instruction */
-        ic++;
-
-        /* write operand1 */
-        if (strcmp(operand1, "0") != 0) {
-            if (src_addressing == 2 || src_addressing == 3) {
-                src = extractRegisterNumber(operand1);
-                if (src != NULL) {
-                    assemble_instruction(0, atoi(src), 0, 100, binary_instruction);
-                }
-            }
+        /* Check if the line contains ".extern" or ".entry" */
+        if (strstr(Current_Line, ".extern") != NULL || strstr(Current_Line, ".entry") != NULL) {
+            continue; 
         }
-
-        /* write operand2 */
-        if (strcmp(operand2, "0") != 0) {
-            if (dest_addressing == 2 || dest_addressing == 3) {
-                dest = extractRegisterNumber(operand2);
-                if (dest != NULL) {
-                    assemble_instruction(0, atoi(dest), 0, 100, binary_instruction);
-                }
-            }
-        }
+    /* codding the command line and print to the .ob*/
+        printf("Current_Line: %s\n", Current_Line); /* Debugging */
+    IC += commandToBinary(Current_Line, labelTable, ob_file, IC);
+    printf("IC: %d\n", IC);
     }
 
-    /* write to ent */
+    /* write to ent */ 
     printLabelToEntry(labelTable, ent_file);
     
     /* write to ext */
@@ -264,3 +432,4 @@ int* secondpass(char *validatedFileName, struct labelTable *labelTable, char *or
     fclose(ext_file);
     return 0;
 }
+

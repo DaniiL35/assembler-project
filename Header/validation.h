@@ -26,6 +26,9 @@ struct instruction {
     int num_of_operands;
 };
 
+extern struct instruction instruction_Table[INSTRUCTION_TABLE_SIZE]; 
+
+
 /* Function declarations */
 int valid_register(char *str);
 int is_alphanumeric_string(const char *str, int length);
