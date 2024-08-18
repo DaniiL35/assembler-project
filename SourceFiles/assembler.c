@@ -26,8 +26,7 @@ int checkFile(char *fName) {
 }
 
 /* Main function */
-/* Main function */
-/* Main function */
+
 int main(int argc, char *argv[]) {
     int i;
     char *validatedFileName;
@@ -41,16 +40,19 @@ int main(int argc, char *argv[]) {
     for (i = 1; i < argc; i++) {
         char *fName = argv[i];
         if (checkFile(fName)) {
-            if(strcmp(preprocessor(fName), "error") == 0){
+            if (strcmp(preprocessor(fName), "error") == 0) {
                 continue;
             }
+
             validatedFileName = validation(fName);
             if (strcmp(validatedFileName, "error") != 0) {
-            labelTable = firstpass(validatedFileName, fName);
-            secondpass(validatedFileName, labelTable, fName);
+                labelTable = firstpass(validatedFileName, fName);
+                secondpass(validatedFileName, labelTable, fName);
+                free(validatedFileName);
+            }
         }
-        
     }
-    }
+
     return 0;
 }
+

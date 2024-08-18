@@ -108,8 +108,15 @@ int extract_number(char* str) {
 
 /* get opcode from command*/
 int getOpcode(char *command) {
-    return instruction_Table[find_in_instruction_Table_table(command)].opcode;
+    int index;  
+    index = find_in_instruction_Table_table(command);
+    
 
+    if (index < 0 || index >= INSTRUCTION_TABLE_SIZE) {
+        fprintf(stderr, "Error: Invalid command '%s'.\n", command);
+        exit(1);  
+    }
+    return instruction_Table[index].opcode;
 }
 
 int get_adressing(char *operand) {
@@ -151,8 +158,17 @@ void toBinaryString(unsigned int num, char *str, int length) {
     }
 }
 
-int number_of_operands(char * cmd){
-return instruction_Table[find_in_instruction_Table_table(cmd)].num_of_operands;
+/* get number of operands from command */
+int number_of_operands(char *cmd) {
+    int index;  
+    index = find_in_instruction_Table_table(cmd);
+    
+    
+    if (index < 0 || index >= INSTRUCTION_TABLE_SIZE) {
+        fprintf(stderr, "Error: Invalid command '%s'.\n", cmd);
+        exit(1);  
+    }
+    return instruction_Table[index].num_of_operands;
 }
 
 /* Function to convert a command to binary */
