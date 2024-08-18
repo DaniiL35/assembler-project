@@ -80,7 +80,7 @@ int macro_line(char *line_buffer, struct Macro **currentMacro, struct MacroTable
         
         /* Check if the macro name starts with a digit */
         if (isdigit(macro_name[0])) {
-            printf("Error: Macro name '%s' cannot start with a digit.\n", macro_name);
+            fprintf(stdout,"Error: Macro name '%s' cannot start with a digit.\n", macro_name);
             free(newMacro);
             return -1;
         }
@@ -88,7 +88,7 @@ int macro_line(char *line_buffer, struct Macro **currentMacro, struct MacroTable
         /* Check if the macro name starts with an invalid name */
         for (i = 0; i < invalid_macro_table_size; i++) {
             if (strncmp(macro_name, invalid_macro_names[i], strlen(invalid_macro_names[i])) == 0) {
-                printf("Error: Macro name '%s' cannot start with '%s'.\n", macro_name, invalid_macro_names[i]);
+                fprintf(stdout,"Error: Macro name '%s' cannot start with '%s'.\n", macro_name, invalid_macro_names[i]);
                 free(newMacro);
                 return -1;
             }

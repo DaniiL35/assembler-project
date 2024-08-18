@@ -66,7 +66,6 @@ void printLabelToExtern(struct labelTable *lTable, FILE *ext_file, char *operand
     label = search_label(lTable, operand1);
     if (label != NULL) {
         if (label->is_extern == 1) {
-            printf("Found extern label: %s\n", label->name);
             sprintf(extern_line, "%s %d\n", label->name, *ic+1);
             fputs(extern_line, ext_file);
         }
@@ -76,7 +75,6 @@ void printLabelToExtern(struct labelTable *lTable, FILE *ext_file, char *operand
     label = search_label(lTable, operand2);
     if (label != NULL) {
         if (label->is_extern == 1) {
-            printf("Found extern label: %s\n", label->name);
             sprintf(extern_line, "%s %d\n", label->name, *ic+2);
             fputs(extern_line, ext_file);
         }
@@ -130,9 +128,7 @@ int decode_data(char *operand, int IC, FILE *ob_file) {
     data_bitField dbf = {0};
     char *token;
 
-    printf("got this data here %s\n", operand);
     operand = operand + 5;
-    printf("got after skip %s\n", operand);
 
     token = strtok(operand, ",");
     while (token != NULL) {
@@ -349,9 +345,7 @@ return count;
         
 
     }else if(get_adressing(op) == 1){
-            printf("operand: %s\n", op);
             lbf.dest = extract_number(op);
-            printf("lbf.dest: %d\n", lbf.dest);
             lbf.are = 4;
             combined = combineLabelBitField(lbf);
             toBinaryString(combined, binaryString, 15);
@@ -380,8 +374,6 @@ int opToBinaryDouble(char *op1, char *op2, struct labelTable *labelTable, FILE *
     struct Label *label = NULL;
 
     
-    printf("extract_number(op1): %d\n", extract_number(op1));
-    printf("extract_number(op2): %d\n", extract_number(op2));
 
 
 if ((strcmp(addressing_method(op1), "2") == 0 || strcmp(addressing_method(op1), "3") == 0) &&
@@ -448,7 +440,6 @@ if ((strcmp(addressing_method(op1), "2") == 0 || strcmp(addressing_method(op1), 
         fputs(formated_ob, ob_file);
         fputs("\n", ob_file);
     } else if(strcmp(addressing_method(op2), "0") == 0){
-        printf("op2: %s\n", op2);
         lbf.dest = extract_number(op2);
         lbf.are = 4;
         combined = combineLabelBitField(lbf);
@@ -462,7 +453,6 @@ if ((strcmp(addressing_method(op1), "2") == 0 || strcmp(addressing_method(op1), 
         rbf1.dest = extract_number(op2);
         rbf1.are = 4;
         combined = combineRegBitField(rbf1);
-        printf("rbf1.dest: %d\n", rbf1.dest);
         toBinaryString(combined, binaryString2, 15);
         sprintf(formated_ob, "%04d %s", IC+1, binary_to_octal(binaryString2));
         fputs(formated_ob, ob_file);
@@ -497,7 +487,6 @@ int* secondpass(char *validatedFileName, struct labelTable *labelTable, char *or
     ext_file = openFileAndCheck(ext_file_name, "w");
 
     /* Second pass processing */
-    printf("Second pass started\n");
     while (fgets(Current_Line, MAX_LINE_LEN, input_file) != NULL) {
         /* Check if the line contains ".extern" or ".entry" */
         if (strstr(Current_Line, ".extern") != NULL || strstr(Current_Line, ".entry") != NULL) {
@@ -505,7 +494,6 @@ int* secondpass(char *validatedFileName, struct labelTable *labelTable, char *or
         }
     /* codding the command line and print to the .ob*/
     IC += commandToBinary(Current_Line, labelTable, ob_file, ext_file, IC);
-    printf("IC: %d\n", IC);
     
 
     }

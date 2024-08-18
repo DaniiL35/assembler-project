@@ -39,7 +39,7 @@ char *addressing_method(char *str) {
         skip_leading_sign(&str);
         while (*str != ',' && *str != ' ' && *str == '\0') {
             if (!isdigit(str[i])) {
-                printf("Error: invalid immediate addressing\n");
+                fprintf(stdout,"Error: invalid immediate addressing\n");
                 return NULL;
             }
         }
@@ -386,7 +386,7 @@ char *validation(char *fName) {
                     break;
                 default:
                     error_flag = 1;
-                    printf("Error at line %d: invalid number of operands\n", line_counter);
+                    fprintf(stdout,"Error at line %d: invalid number of operands\n", line_counter);
                     continue;
             }
         } else if (is_directive(current_word)) {
@@ -428,8 +428,7 @@ char *validation(char *fName) {
                     break;
                 case 4: /* Code for .extern directive */
                     skip_to_next_word(&line_ptr);
-                    printf("line_ptr: %s\n", line_ptr);
-                    printf("addressing_method: %s\n", addressing_method(line_ptr));
+
                     if (strstr(addressing_method(line_ptr), "1") == NULL) {
                         error_flag = 1;
                         fprintf(stdout, "Error at line %d: invalid extern code\n", line_counter);
@@ -463,7 +462,7 @@ char *validation(char *fName) {
         free(tempFileName);
         free(validateFileName);
         free(current_word); /* Free the dynamically allocated memory for current_word */
-        printf("Error found in validation \n");
+        fprintf(stdout,"Error found in validation \n");
         return "error";
     }
 
@@ -476,6 +475,5 @@ char *validation(char *fName) {
     free(am_file_name);
     free(tempFileName);
 
-    printf("Validation completed\n");
     return validateFileName;
 }

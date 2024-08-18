@@ -10,7 +10,7 @@ int checkFile(char *fName) {
 
     file = fopen(fullFileName, "r");
     if (file == NULL) {
-        fprintf(stderr, "Error: File \"%s\" does not exist\n", fullFileName);
+        fprintf(stdout, "Error: File \"%s\" does not exist\n", fullFileName);
         free(fullFileName);  
         return 0;
     }
@@ -28,7 +28,7 @@ int main(int argc, char *argv[]) {
     struct labelTable *labelTable;
 
     if (argc < 2) {
-        fprintf(stderr, "Usage: %s <filename1> <filename2> ...\n", argv[0]);
+        fprintf(stdout, "Usage: %s <filename1> <filename2> ...\n", argv[0]);
         return 1;
     }
 
