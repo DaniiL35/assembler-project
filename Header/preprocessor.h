@@ -1,3 +1,12 @@
+/**
+ * @file preprocessor.h
+ * @brief Header file for the preprocessor.
+ *
+ * This file contains the definitions for the macro structures, macro table, and functions
+ * used for macro processing in the preprocessor. It includes function prototypes for
+ * initializing and managing the macro table, processing macro definitions and calls,
+ * and preprocessing assembly files.
+ */
 #ifndef PREPROCESSOR_H
 #define PREPROCESSOR_H
 
@@ -18,18 +27,27 @@ struct MacroTable;
 
 /* Function declarations */
 /**
- * @brief Initializes the macro table.
+ * @brief Initialize the macro table.
  * 
- * This function initializes the macro table by setting all entries to NULL.
+ * This function sets all entries in the macro table to NULL.
  * 
  * @param mTable Pointer to the macro table to initialize.
  */
 void initMacroTable(struct MacroTable *mTable);
 
 /**
- * @brief Inserts a macro into the macro table.
+ * @brief Free the memory used by the macro table.
  * 
- * This function inserts a macro into the macro table using a hash function to determine the index.
+ * This function deallocates memory for all macros and their associated lines in the macro table.
+ * 
+ * @param mTable Pointer to the macro table to free.
+ */
+void freeMacroTable(struct MacroTable *mTable);
+
+/**
+ * @brief Insert a macro into the macro table.
+ * 
+ * This function adds a macro to the macro table at the appropriate index.
  * 
  * @param mTable Pointer to the macro table.
  * @param macro Pointer to the macro to insert.
@@ -37,71 +55,39 @@ void initMacroTable(struct MacroTable *mTable);
 void insertMacro(struct MacroTable *mTable, struct Macro *macro);
 
 /**
- * @brief Searches for a macro in the macro table.
+ * @brief Search for a macro in the macro table.
  * 
- * This function searches for a macro in the macro table by name.
+ * This function searches the macro table for a macro with a specific name.
  * 
  * @param mTable Pointer to the macro table.
- * @param name The name of the macro to search for.
- * @return Pointer to the found macro, or NULL if not found.
+ * @param name Name of the macro to search for.
+ * @return Pointer to the found macro, or NULL if the macro is not found.
  */
 struct Macro *search_macro(struct MacroTable *mTable, char *name);
 
 /**
- * @brief Concatenates two strings with memory allocation.
+ * @brief Process a line from the source file and update the current macro.
  * 
- * This function concatenates two strings and allocates memory for the resulting string.
+ * This function processes a line of text to determine if it is the start of a macro definition,
+ * the end of a macro definition, a macro call, or a normal line. It updates the current macro
+ * accordingly.
  * 
- * @param str1 The first string.
- * @param str2 The second string.
- * @return Pointer to the concatenated string.
- */
-char *strcatWithMalloc(const char *str1, const char *str2);
-
-/**
- * @brief Opens a file and checks for errors.
- * 
- * This function opens a file with the specified mode and checks for errors.
- * 
- * @param filePath The path to the file.
- * @param mode The mode to open the file in.
- * @return Pointer to the opened file.
- */
-FILE *openFileAndCheck(const char *filePath, const char *mode);
-
-/**
- * @brief Processes a line of macro definition or usage.
- * 
- * This function processes a line of macro definition or usage and updates the current macro and macro table accordingly.
- * 
- * @param line_buffer The line buffer containing the line to process.
- * @param currentMacro Pointer to the current macro.
+ * @param line_buffer Line from the source file.
+ * @param currentMacro Pointer to the current macro being processed.
  * @param mTable Pointer to the macro table.
- * @return An integer indicating the type of line processed:
- *         0 for start of macro definition,
- *         1 for end of macro definition,
- *         2 for macro call,
- *         3 for normal line,
- *         -1 for error.
+ * @return Status code indicating the type of line (macro definition, macro call, etc.).
  */
 int macro_line(char *line_buffer, struct Macro **currentMacro, struct MacroTable *mTable);
 
 /**
- * @brief Prints the macro table.
+ * @brief Preprocess the given assembly file.
  * 
- * This function prints the contents of the macro table for debugging purposes.
+ * This function reads an assembly source file, processes macro definitions and calls, and
+ * writes the preprocessed output to a new file. The new file's name is based on the input file's
+ * base name with an appropriate extension.
  * 
- * @param mTable Pointer to the macro table.
- */
-void printMacroTable(struct MacroTable *mTable);
-
-/**
- * @brief Preprocesses the assembly file.
- * 
- * This function preprocesses the assembly file by handling macro definitions and usages.
- * 
- * @param fName The name of the assembly file to preprocess.
- * @return Pointer to the name of the preprocessed file.
+ * @param fName Base name of the assembly file (without extension).
+ * @return Name of the preprocessed file, or "error" if an error occurred.
  */
 char *preprocessor(char *fName);
 #endif

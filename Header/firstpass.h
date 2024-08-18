@@ -1,3 +1,12 @@
+/**
+ * @file firstpass.h
+ * @brief Header file for the first pass of the assembler.
+ *
+ * This file contains the definitions for the label table and functions used in the first
+ * pass of the assembler. It includes function prototypes for initializing and managing
+ * the label table, processing label definitions, and performing the first pass of
+ * the assembler.
+ */
 #ifndef FIRSTPASS_H
 #define FIRSTPASS_H
 
@@ -8,6 +17,8 @@
 
 /* Declare any global variables or constants */
 #define WORD_LEN 31
+#define MAX_MEMORY 4096
+
 
 /* Label structure */
 struct Label {

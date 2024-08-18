@@ -1,9 +1,4 @@
-#include "utils.h"
-#include "preprocessor.h"
-#include "validation.h"
-#include "firstpass.h"
-#include "secondpass.h"
-
+#include "assembler.h"
 
 
 /* Function to check if the file exists */

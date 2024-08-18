@@ -3,7 +3,6 @@
 
 
 
-
 /* Initialize the label table */
 void initLabelTable(struct labelTable *lTable) {
     int i;
@@ -223,6 +222,10 @@ struct labelTable *firstpass(char *Vname, char *fName) {
             dc += line_type.number;
         }
         line++;
+        if(ic+dc > MAX_MEMORY){
+            fprintf(stdout, "Error: Memory overflow\n");
+            exit(EXIT_FAILURE);
+        }
 
     }
     
