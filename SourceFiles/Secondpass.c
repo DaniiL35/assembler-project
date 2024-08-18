@@ -4,8 +4,46 @@
 
 #define BINARY_STR_LEN 16 /* 15 bits + 1 for null terminator */
 
+/* print label to entry file */
+void printLabelToEntry(struct labelTable *lTable, FILE *ent_file) {
+    struct Label *label = NULL;
+    int i;
+    char entry_line[MAX_LINE_LEN];
+    for (i = 0; i < TABLE_SIZE; i++) {
+        label = lTable->table[i];
+        while (label != NULL) {
+            if(label->is_entry == 1){
+                sprintf(entry_line, "%s %d\n", label->name, label->address);
+                fputs(entry_line, ent_file);
+            }
+            label = label->next;
+        }
+    }
+}
 
+/* print label to extern file */
+void printLabelToExtern(struct labelTable *lTable, FILE *ext_file,char *operand1 , char *operand2,int *ic) {
+    struct Label *label = NULL;
+    int i;
+    char extern_line[MAX_LINE_LEN];
+    for (i = 0; i < TABLE_SIZE; i++) {
+        label = lTable->table[i];
+        while (label != NULL) {
+            if(label->is_extern == 1){
+                if(strcmp(operand1,label->name) == 0){
+                    sprintf(extern_line, "%s %d\n", label->name, *ic);
+                    fputs(extern_line, ext_file);
+                }
+                if(strcmp(operand2,label->name) == 0){
+                    sprintf(extern_line, "%s %d\n", label->name, *ic);
+                    fputs(extern_line, ext_file);
+                }
+            }
+            label = label->next;
+        }
+    }
 
+}
 
 /* Function to convert binary string to unsigned int */
 int binaryToOctal(const char *binary) {
@@ -158,13 +196,19 @@ int* secondpass(char *validatedFileName, struct labelTable *labelTable, char *or
         command[0] = '0';
         operand1[0] = '0';
         operand2[0] = '0';
+        
 
         sscanf(Current_Line, "%s %s %s %s", label, command, operand1, operand2);
+        
+
+
         
         opcode = get_opcode(command);
         src_addressing = get_addressing_method(operand1);
         dest_addressing = get_addressing_method(operand2);
         are_bits = get_are_bits();
+
+        
 
         /* Assemble the instruction into a binary string */
         assemble_instruction(opcode, src_addressing, dest_addressing, are_bits, binary_instruction);
@@ -197,9 +241,13 @@ int* secondpass(char *validatedFileName, struct labelTable *labelTable, char *or
     }
 
     /* write to ent */
-    /*checkEntryLabels(labelTable,ent_file); */
+    printLabelToEntry(labelTable, ent_file);
+    
     /* write to ext */
     fputs("extern", ext_file);
+
+    
+    
 
     /*free seciton*/
     free(ob_file_name);

@@ -3,6 +3,7 @@
 
 
 
+
 /* Initialize the label table */
 void initLabelTable(struct labelTable *lTable) {
     int i;
@@ -175,19 +176,7 @@ LabelDefResult label_def(char *line_buffer, struct Label **currentLabel, struct 
 
     return result;
 }
-void printEntryLabels(struct labelTable *lTable) {
-    struct Label *label = NULL;
-    int i;
-    for ( i = 0; i < TABLE_SIZE; i++) {
-        label = lTable->table[i];
-        while (label != NULL) {
-            if (label->is_entry == 1) {
-                printf("Entry label: %s\n", label->name);
-            }
-            label = label->next;
-        }
-    }
-}
+
 
 /* Function to preprocess the as file */
 struct labelTable *firstpass(char *Vname, char *fName) {
@@ -231,7 +220,6 @@ struct labelTable *firstpass(char *Vname, char *fName) {
     printf("ic = %d, dc = %d\n", ic, dc); /* Debugging */
     sprintf(top_line, "\t%d %d\n", ic-100, dc);
     fputs(top_line, ob_file);
-
 
 
     /* free and close part */
