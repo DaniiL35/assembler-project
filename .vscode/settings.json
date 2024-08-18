@@ -9,7 +9,8 @@
         "label_table.h": "c",
         "reordering.h": "c",
         "algorithm": "c",
-        "utils.h": "c"
+        "utils.h": "c",
+        "sstream": "c"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

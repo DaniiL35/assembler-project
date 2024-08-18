@@ -8,6 +8,18 @@
 
 
 /* Declare any global variables or constants */
+#define COM_TABLE_SIZE 18
+
+/* Structure to represent a command */
+struct command{
+    char *name;
+    int opcode;
+    int num_of_operands;
+};
+
+
+
+
 
 /**
  * @struct BitField
@@ -39,6 +51,10 @@ typedef struct label_bitField {
     unsigned int dest : 12;   /**< Destination field */
     unsigned int are : 3;     /**< ARE field */
 } label_bitField;
+
+typedef struct {
+    unsigned int data : 15;   /**< Data field */
+} data_bitField;
 
 
 /* Function declaration for secondpass */
@@ -138,7 +154,7 @@ int number_of_operands(char *cmd);
  * @param IC The instruction counter.
  * @return The status of the conversion.
  */
-int commandToBinary(char *line, struct labelTable *labelTable, FILE *ob_file, int IC);
+int commandToBinary(char *line, struct labelTable *labelTable, FILE *ob_file,FILE *ext_file, int IC) ;
 
 /**
  * @brief Converts an operand to binary.

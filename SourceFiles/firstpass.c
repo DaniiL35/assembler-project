@@ -19,6 +19,7 @@ void printLabels(struct labelTable *lTable) {
         struct Label *label = lTable->table[i];
         while (label != NULL) {
             printf("Name: %s, Address: %d\n", label->name, label->address);
+            printf("is_extern: %d\n", label->is_extern);
             label = label->next;
         }
     }
@@ -119,7 +120,6 @@ LabelDefResult label_def(char *line_buffer, struct Label **currentLabel, struct 
         }
         /* check if the label already exists */
         if (search_label(lTable, label) != NULL) {
-            
             free(newLabel);
         } else {
             
@@ -216,6 +216,7 @@ struct labelTable *firstpass(char *Vname, char *fName) {
         line_type = label_def(Current_Line, &currentLabel, lTable, ic, dc);
         printf("reading line %s\n", Current_Line); /* Debugging */
 
+
         if(line_type.type == com){
             ic += line_type.number;
         } else if(line_type.type == dat){
@@ -240,7 +241,7 @@ struct labelTable *firstpass(char *Vname, char *fName) {
     fclose(ob_file);
     fclose(output_file); /* Close the input file as well */
 
-
+    printLabels(lTable); /* Debugging */
 
     return lTable;
 }
