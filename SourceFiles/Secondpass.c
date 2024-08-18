@@ -227,7 +227,10 @@ return instruction_Table[find_in_instruction_Table_table(cmd)].num_of_operands;
 
 /* Function to convert a command to binary */
 int commandToBinary(char *line, struct labelTable *labelTable, FILE *ob_file,FILE *ext_file, int IC) {
-    char label[MAX_LINE_LEN], command[MAX_LINE_LEN], operand1[MAX_LINE_LEN], operand2[MAX_LINE_LEN];
+    char label[MAX_LINE_LEN] = {0};
+    char command[MAX_LINE_LEN] = {0};
+    char operand1[MAX_LINE_LEN] = {0};
+    char operand2[MAX_LINE_LEN] = {0};
     BitField bf = {0}; 
     unsigned int combined;
     char binaryString[16]; 
